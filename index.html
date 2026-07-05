@@ -817,21 +817,38 @@
 
         /* Mobile / Tablet Responsive Drawer styles */
         @media (max-width: 900px) {
+            /* Reset Safari default iOS input/button appearances */
+            input, select, textarea {
+                -webkit-appearance: none;
+                appearance: none;
+                font-size: 16px !important; /* Prevent iOS Auto-Zoom on Focus */
+                border-radius: 8px;
+            }
+            
             aside {
                 transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: 5px 0 25px rgba(0,0,0,0.5);
-                width: 250px;
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 8px 0 30px rgba(0,0,0,0.6);
+                width: 260px;
+                z-index: 1010; /* Above overlay */
             }
             aside.open {
                 transform: translateX(0);
             }
+            
             main {
                 margin-left: 0 !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                padding: 1.5rem 1rem !important;
+                padding: 1rem 0.75rem !important;
+                -webkit-overflow-scrolling: touch;
             }
+            
+            /* Enable bouncy inertia smooth scrolling on mobile elements */
+            .modal-body, .table-responsive, #view-members, .detail-tab-panel {
+                -webkit-overflow-scrolling: touch;
+            }
+            
             /* Adjust upper/lower 1/2 folders on mobile to stack */
             #view-members {
                 height: auto !important;
@@ -841,19 +858,30 @@
                 height: auto !important;
                 min-height: unset !important;
             }
-            /* Modal responsive padding */
+            
+            /* Modal responsive padding for iOS */
             .modal-container {
-                width: 95% !important;
-                height: 90vh !important;
-                padding: 1rem !important;
+                width: 96% !important;
+                max-height: 86vh !important;
+                height: auto !important;
+                margin: 7vh auto !important;
+                padding: 1.25rem 1rem !important;
+                border-radius: 20px !important;
             }
+            .modal-body {
+                max-height: 68vh !important;
+                overflow-y: auto !important;
+            }
+            
             /* Table responsive wrapping */
             .table-responsive {
                 overflow-x: auto !important;
             }
+            
             #mobile-top-bar {
                 display: flex !important;
             }
+            
             /* Light theme responsive */
             body.light-theme #mobile-top-bar {
                 background: #ffffff !important;
@@ -862,10 +890,18 @@
             body.light-theme #mobile-top-bar span {
                 color: #0f172a !important;
             }
+            body.light-theme #mobile-top-bar button {
+                background: rgba(139, 92, 246, 0.08) !important;
+                color: var(--primary) !important;
+                border-color: rgba(139, 92, 246, 0.3) !important;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Sidebar Overlay Backdrop for Mobile -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 98; backdrop-filter: blur(2px);"></div>
+
     <!-- Mobile Top Navigation Bar -->
     <div id="mobile-top-bar" style="display: none; background: rgba(10, 8, 22, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--card-border); padding: 0.75rem 1rem; position: sticky; top: 0; z-index: 99; justify-content: space-between; align-items: center; width: 100%;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -2036,8 +2072,16 @@
         // ==========================================
         function toggleMobileSidebar() {
             const aside = document.querySelector('aside');
+            const overlay = document.getElementById('sidebar-overlay');
             if (aside) {
                 aside.classList.toggle('open');
+                if (aside.classList.contains('open')) {
+                    if (overlay) overlay.style.display = 'block';
+                    document.body.style.overflow = 'hidden'; // Prevent main page scrolling when drawer is open
+                } else {
+                    if (overlay) overlay.style.display = 'none';
+                    document.body.style.overflow = ''; // Restore scrolling
+                }
             }
         }
 
@@ -2285,6 +2329,9 @@
                     // Auto-close mobile sidebar drawer on menu click
                     const aside = document.querySelector('aside');
                     if (aside) aside.classList.remove('open');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    if (overlay) overlay.style.display = 'none';
+                    document.body.style.overflow = ''; // Restore scrolling
                 });
             });
         }
