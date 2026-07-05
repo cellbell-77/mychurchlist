@@ -298,6 +298,8 @@
             bottom: 0;
             left: 0;
             z-index: 100;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .brand-container {
@@ -895,6 +897,57 @@
                 color: var(--primary) !important;
                 border-color: rgba(139, 92, 246, 0.3) !important;
             }
+            
+            /* Responsive Grid Stack overrides for Tablet Portrait & Phone */
+            .dashboard-lower-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
+            }
+            
+            /* Stack Detail modal columns on mobile */
+            .modal-body {
+                grid-template-columns: 1fr !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 1rem !important;
+            }
+            .detail-left-profile {
+                border-right: none !important;
+                border-bottom: 1px solid var(--card-border) !important;
+                padding-right: 0 !important;
+                padding-bottom: 1.25rem !important;
+                overflow-y: visible !important;
+            }
+            .detail-right-content {
+                height: auto !important;
+                overflow: visible !important;
+            }
+        }
+
+        /* 🔄 iPad & iPhone Landscape Viewport Height Optimizations */
+        @media (max-height: 520px) and (max-width: 950px) {
+            .modal-container {
+                margin: 2vh auto !important;
+                max-height: 96vh !important;
+                height: 96vh !important;
+                border-radius: 12px !important;
+                padding: 1rem !important;
+            }
+            .modal-body {
+                max-height: 72vh !important;
+                overflow-y: auto !important;
+                padding: 0.75rem !important;
+            }
+            .modal-header {
+                padding-bottom: 0.5rem !important;
+            }
+            aside {
+                padding: 1rem 0.75rem !important;
+                gap: 1rem !important;
+            }
+            .brand-container {
+                margin-bottom: 0.5rem !important;
+            }
         }
     </style>
 </head>
@@ -992,7 +1045,7 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="dashboard-lower-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
                 <!-- Recent Visit Logs -->
                 <div class="glass-card">
                     <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">✍️ 최근 기록된 성도 동정</h3>
@@ -1742,7 +1795,7 @@
             <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 1.5rem; height: 100%; overflow: hidden; padding: 1.5rem;">
                 
                 <!-- Detail Left side: Member Personal profile card -->
-                <div style="display:flex; flex-direction:column; gap:1.25rem; overflow-y:auto; border-right: 1px solid var(--card-border); padding-right:1.25rem;">
+                <div class="detail-left-profile" style="display:flex; flex-direction:column; gap:1.25rem; overflow-y:auto; border-right: 1px solid var(--card-border); padding-right:1.25rem;">
                     <div class="glass-card" style="padding: 1.25rem; border-color: rgba(139, 92, 246, 0.15); display:flex; flex-direction:column; align-items:center; text-align:center; gap:0.75rem;">
                         <div id="detail-info-photo" style="width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.05); border:2px solid var(--primary); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:2rem; color:var(--text-secondary); margin-bottom:0.25rem;">👤</div>
                         <h4 style="font-size:0.9rem; color:var(--primary-hover); margin-bottom: 0.25rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem; width:100%;">📞 성도 기본 정보</h4>
@@ -1770,7 +1823,7 @@
                 </div>
 
                 <!-- Detail Right side: Visitation timeline + Add log panel -->
-                <div style="display:flex; flex-direction:column; gap:1.25rem; height: 100%; overflow: hidden;">
+                <div class="detail-right-content" style="display:flex; flex-direction:column; gap:1.25rem; height: 100%; overflow: hidden;">
                     
                     <!-- Inner Tab switcher inside detail modal -->
                     <div style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem;">
