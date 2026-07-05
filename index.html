@@ -71,6 +71,15 @@
             border-right: 1px solid rgba(0, 0, 0, 0.08);
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
         }
+        body.light-theme .brand-title {
+            background: linear-gradient(to right, #0f172a, #7c3aed) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        body.light-theme #detail-prayers-table-body td {
+            color: #334155;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
         body.light-theme .nav-item button {
             color: #475569;
         }
@@ -469,7 +478,7 @@
             font-size: 2.2rem;
             font-weight: 800;
             margin-top: 0.5rem;
-            color: white;
+            color: var(--text-primary);
         }
         .stat-icon {
             font-size: 2.5rem;
@@ -841,6 +850,9 @@
             /* Table responsive wrapping */
             .table-responsive {
                 overflow-x: auto !important;
+            }
+            #mobile-top-bar {
+                display: flex !important;
             }
             /* Light theme responsive */
             body.light-theme #mobile-top-bar {
@@ -1699,13 +1711,13 @@
                         <div id="detail-info-photo" style="width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.05); border:2px solid var(--primary); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:2rem; color:var(--text-secondary); margin-bottom:0.25rem;">👤</div>
                         <h4 style="font-size:0.9rem; color:var(--primary-hover); margin-bottom: 0.25rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem; width:100%;">📞 성도 기본 정보</h4>
                         <div style="display:flex; flex-direction:column; gap: 0.6rem; font-size: 0.85rem; width:100%; text-align:left;">
-                            <div><span style="color:var(--text-secondary);">성별/출생:</span> <span id="detail-info-gender-birth" style="color:white; font-weight:500;">남 (1980년생)</span></div>
-                            <div><span style="color:var(--text-secondary);">구원일:</span> <span id="detail-info-salvation" style="color:white; font-weight:500;">-</span></div>
-                            <div><span style="color:var(--text-secondary);">전화번호:</span> <span id="detail-info-phone" style="color:white; font-weight:500;">010-1234-5678</span></div>
-                            <div><span style="color:var(--text-secondary);">교회:</span> <span id="detail-info-church" style="color:white; font-weight:500;">-</span></div>
-                            <div><span style="color:var(--text-secondary);">소속 그룹:</span> <span id="detail-info-group" style="color:white; font-weight:500;">-</span></div>
-                            <div><span style="color:var(--text-secondary);">주소:</span> <span id="detail-info-address" style="color:white; font-weight:500;">서울시 강남구</span></div>
-                            <div><span style="color:var(--text-secondary);">가족사항 (수기):</span> <span id="detail-info-family" style="color:white; font-weight:500;">배우자, 자녀 1남</span></div>
+                            <div><span style="color:var(--text-secondary);">성별/출생:</span> <span id="detail-info-gender-birth" style="color:var(--text-primary); font-weight:500;">남 (1980년생)</span></div>
+                            <div><span style="color:var(--text-secondary);">구원일:</span> <span id="detail-info-salvation" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                            <div><span style="color:var(--text-secondary);">전화번호:</span> <span id="detail-info-phone" style="color:var(--text-primary); font-weight:500;">010-1234-5678</span></div>
+                            <div><span style="color:var(--text-secondary);">교회:</span> <span id="detail-info-church" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                            <div><span style="color:var(--text-secondary);">소속 그룹:</span> <span id="detail-info-group" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                            <div><span style="color:var(--text-secondary);">주소:</span> <span id="detail-info-address" style="color:var(--text-primary); font-weight:500;">서울시 강남구</span></div>
+                            <div><span style="color:var(--text-secondary);">가족사항 (수기):</span> <span id="detail-info-family" style="color:var(--text-primary); font-weight:500;">배우자, 자녀 1남</span></div>
                             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem; margin-top:0.25rem;">
                                 <span style="color:var(--primary-hover); font-weight:600; display:block; margin-bottom:0.25rem; font-size:0.8rem;">🔗 가족 및 관계 성도 링크</span>
                                 <div id="detail-info-relations" style="display:flex; flex-wrap:wrap; gap:0.25rem;">
@@ -4510,7 +4522,7 @@ ${JSON.stringify(sanitizedMembers, null, 2)}
                     : '<span class="badge" style="padding:0.15rem 0.4rem; font-size:0.7rem; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.25);">X (미구원)</span>';
 
                 tr.innerHTML = `
-                    <td style="font-weight:700; color:white;">${p.name}</td>
+                    <td style="font-weight:700; color:var(--text-primary);">${p.name}</td>
                     <td><span class="badge badge-violet">${p.relation}</span></td>
                     <td>${salvBadge}</td>
                     <td style="font-size:0.8rem; color:var(--text-secondary);">${p.registeredAt || '-'}</td>
@@ -5129,14 +5141,16 @@ ${m.notes || '등록된 메모가 없습니다.'}
             // Clear container
             container.innerHTML = '';
 
+            const isLight = document.body.classList.contains('light-theme');
+
             // Generate Calendar grid wrapper style
             const grid = document.createElement('div');
             grid.style.cssText = `
                 display: grid; 
                 grid-template-columns: repeat(7, 1fr); 
                 gap: 1px; 
-                background: var(--card-border); 
-                border: 1px solid var(--card-border); 
+                background: ${isLight ? '#000000' : 'var(--card-border)'}; 
+                border: 1px solid ${isLight ? '#000000' : 'var(--card-border)'}; 
                 border-radius: 12px; 
                 overflow: hidden;
             `;
@@ -5146,13 +5160,13 @@ ${m.notes || '등록된 메모가 없습니다.'}
             weekDays.forEach((day, idx) => {
                 const dayHeader = document.createElement('div');
                 dayHeader.style.cssText = `
-                    background: rgba(255, 255, 255, 0.03); 
+                    background: ${isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.03)'}; 
                     padding: 0.6rem; 
                     text-align: center; 
                     font-size: 0.8rem; 
                     font-weight: 700; 
-                    color: ${idx === 0 ? '#fb7185' : idx === 6 ? '#60a5fa' : 'var(--text-secondary)'};
-                    border-bottom: 1px solid var(--card-border);
+                    color: ${idx === 0 ? '#fb7185' : idx === 6 ? '#60a5fa' : (isLight ? '#0f172a' : 'var(--text-secondary)')};
+                    border-bottom: 1px solid ${isLight ? '#000000' : 'var(--card-border)'};
                 `;
                 dayHeader.textContent = day;
                 grid.appendChild(dayHeader);
@@ -5168,17 +5182,7 @@ ${m.notes || '등록된 메모가 없습니다.'}
 
             for (let i = 0; i < totalCells; i++) {
                 const cell = document.createElement('div');
-                cell.style.cssText = `
-                    background: rgba(10, 8, 22, 0.4); 
-                    min-height: 95px; 
-                    padding: 0.5rem; 
-                    display: flex; 
-                    flex-direction: column; 
-                    gap: 0.3rem; 
-                    transition: all 0.2s ease;
-                    border: 0.5px solid rgba(255,255,255,0.01);
-                `;
-
+                
                 let cellDay;
                 let cellMonth = month;
                 let cellYear = year;
@@ -5208,6 +5212,24 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 const dStr = String(cellDay).padStart(2, '0');
                 const dateKey = `${cellYear}-${mStr}-${dStr}`;
 
+                // Set cell background and border styles
+                let cellBg = isLight ? '#ffffff' : 'rgba(10, 8, 22, 0.4)';
+                if (isOtherMonth) {
+                    cellBg = isLight ? '#f1f5f9' : 'rgba(10, 8, 22, 0.2)';
+                }
+                const cellBorder = isLight ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.01)';
+
+                cell.style.cssText = `
+                    background: ${cellBg}; 
+                    min-height: 95px; 
+                    padding: 0.5rem; 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 0.3rem; 
+                    transition: all 0.2s ease;
+                    border: ${cellBorder};
+                `;
+
                 if (isOtherMonth) {
                     cell.style.opacity = '0.25';
                 } else {
@@ -5220,7 +5242,7 @@ ${m.notes || '등록된 메모가 없습니다.'}
                         if (dateKey === todayStr) {
                             cell.style.background = 'rgba(139, 92, 246, 0.15)';
                         } else {
-                            cell.style.background = 'rgba(10, 8, 22, 0.4)';
+                            cell.style.background = isLight ? '#ffffff' : 'rgba(10, 8, 22, 0.4)';
                         }
                     });
                     cell.onclick = (e) => {
@@ -5239,7 +5261,7 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 dayNum.style.cssText = `
                     font-size: 0.8rem; 
                     font-weight: 700; 
-                    color: ${i % 7 === 0 ? '#f87171' : i % 7 === 6 ? '#60a5fa' : 'white'};
+                    color: ${i % 7 === 0 ? '#ef4444' : i % 7 === 6 ? '#3b82f6' : (isLight ? '#0f172a' : 'white')};
                 `;
                 dayNum.textContent = cellDay;
                 cell.appendChild(dayNum);
@@ -5320,6 +5342,11 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 body.classList.add('light-theme');
                 if (btn) btn.textContent = '🌙 다크';
                 safeStorage.setItem('ssm_theme', 'light');
+            }
+
+            // Re-render local calendar if active to update colors instantly!
+            if (activeTab === 'view-schedules' && scheduleActiveTab === 'calendar') {
+                renderLocalCalendar();
             }
         }
 
