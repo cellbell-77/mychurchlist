@@ -961,6 +961,36 @@
                 gap: 1.25rem !important;
             }
             
+            /* Stack modal headers vertically on mobile to prevent horizontal squeezing */
+            .modal-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.75rem !important;
+                padding-right: 2.5rem !important; /* Leave room for close button */
+            }
+            .modal-header > div:nth-child(2) {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+            /* Style buttons inside headers to wrap and fit nicely */
+            .modal-header button.btn {
+                padding: 0.4rem 0.75rem !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap !important;
+                flex: 1 1 auto !important; /* Allow button to grow and wrap */
+            }
+            /* Position close button in top right corner of the header */
+            .modal-header button[onclick^="close"] {
+                position: absolute !important;
+                top: 0.75rem !important;
+                right: 0.75rem !important;
+                margin: 0 !important;
+                padding: 0.25rem !important;
+                line-height: 1 !important;
+            }
+
             /* Stack Detail modal columns on mobile */
             .modal-body {
                 grid-template-columns: 1fr !important;
