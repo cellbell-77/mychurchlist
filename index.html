@@ -1288,9 +1288,93 @@
                 margin-bottom: 0.5rem !important;
             }
         }
+
+        /* Lock Screen CSS Styles */
+        .lock-screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #090615;
+            background-image: var(--bg-gradient);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            opacity: 1;
+            visibility: visible;
+        }
+        .lock-screen-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .lock-screen-container {
+            width: 100%;
+            max-width: 360px;
+            padding: 2.25rem 1.75rem !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border-color: rgba(139, 92, 246, 0.2) !important;
+        }
+        .shake {
+            animation: shakeKeyframe 0.4s ease-in-out;
+        }
+        @keyframes shakeKeyframe {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        /* Toggle switch CSS */
+        .switch-toggle input:checked + .switch-slider {
+            background-color: var(--primary);
+        }
+        .switch-toggle .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        .switch-toggle input:checked + .switch-slider:before {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 <body>
+    <!-- APP LOCK SCREEN OVERLAY -->
+    <div id="app-lock-screen" class="lock-screen-overlay hidden">
+        <div class="lock-screen-container glass-card">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem; text-align: center; user-select: none;">🔒</div>
+            <h2 style="color: white; font-size: 1.25rem; font-weight: 800; text-align: center; margin-bottom: 0.25rem;">성도섬김마스터 보안 잠금</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; margin-bottom: 1.5rem;">데이터 보호를 위해 비밀번호를 입력해 주세요.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+                <div style="position: relative; width: 100%;">
+                    <input type="password" id="lock-password-input" class="form-control" placeholder="비밀번호 입력" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; padding-right: 2.5rem;" onkeydown="handleLockInputKeydown(event)">
+                    <span id="lock-toggle-visibility" onclick="toggleLockPasswordVisibility()" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem; color: var(--text-secondary); user-select: none;">👁️</span>
+                </div>
+                <div id="lock-error-msg" style="color: #f87171; font-size: 0.8rem; text-align: center; height: 16px; font-weight: 500;"></div>
+                
+                <button class="btn btn-primary" onclick="attemptUnlock()" style="font-weight: 700; font-size: 1rem; padding: 0.6rem; width: 100%;">잠금 해제</button>
+                
+                <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="checkbox" id="lock-remember-device" style="width: 14px; height: 14px; cursor: pointer;">
+                    <label for="lock-remember-device" style="font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; user-select: none;">이 기기에서 30일간 잠금 해제 유지</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar Overlay Backdrop for Mobile -->
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 98; backdrop-filter: blur(2px);"></div>
 
@@ -1715,6 +1799,41 @@
                         <div class="tag-manager-wrapper" id="setting-group-list">
                             <!-- group tags -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- 🔒 Password Security Settings -->
+                <div class="glass-card" style="display:flex; flex-direction:column; gap:1.25rem;">
+                    <h3 style="font-size: 1.1rem; color: white; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">🔒 프로그램 잠금 및 보안 설정</h3>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-size:0.85rem; color:var(--text-primary); font-weight:600; display:block;">비밀번호 화면 잠금 사용</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:0.15rem;">앱 실행 시 비밀번호 입력을 강제합니다.</span>
+                        </div>
+                        <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink:0;">
+                            <input type="checkbox" id="setting-lock-enabled" onchange="toggleLockEnabledSetting()" style="opacity: 0; width: 0; height: 0;">
+                            <span class="switch-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.08); transition: .3s; border-radius: 24px; border: 1px solid var(--card-border);"></span>
+                        </label>
+                    </div>
+
+                    <div id="settings-password-form" class="hidden" style="display:flex; flex-direction:column; gap:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem;">
+                        <div class="form-group" id="settings-pass-current-wrapper">
+                            <label style="font-size:0.8rem; color:var(--text-secondary);">현재 비밀번호 (최초 설정 시 비워두기)</label>
+                            <input type="password" id="setting-pass-current" class="form-control" placeholder="현재 비밀번호">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem; color:var(--text-secondary);">새 비밀번호</label>
+                                <input type="password" id="setting-pass-new" class="form-control" placeholder="새 비밀번호">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem; color:var(--text-secondary);">새 비밀번호 확인</label>
+                                <input type="password" id="setting-pass-confirm" class="form-control" placeholder="새 비밀번호 확인">
+                            </div>
+                        </div>
+                        <div id="settings-pass-error" style="color: #f87171; font-size: 0.8rem; font-weight: 500;"></div>
+                        <button class="btn btn-primary" onclick="saveNewPassword()" style="font-weight:700; width:100%; margin-top:0.25rem;">💾 비밀번호 설정 및 변경 저장</button>
                     </div>
                 </div>
 
@@ -2528,6 +2647,7 @@
             // Initialize Firebase sync engine
             initFirebaseEngine();
 
+            checkAppLockState(); // Challenge Password Lock immediately on load
             setupSidebarNav();
             renderDashboard();
             updateFormSelectors();
@@ -2548,6 +2668,274 @@
                 if (btnMobile) btnMobile.textContent = '☀️ 라이트';
             }
         });
+
+
+        // ==========================================
+        // 🔒 SECURITY: PASSWORD SCREEN LOCK SYSTEM
+        // ==========================================
+        async function sha256(message) {
+            if (!crypto.subtle) {
+                // Safe deterministic hash fallback for file:// protocol offline mode
+                let hash = 0;
+                for (let i = 0; i < message.length; i++) {
+                    const char = message.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return "fallback_" + hash.toString(16);
+            }
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        function checkAppLockState() {
+            const lockEnabled = safeStorage.getItem('ssm_lock_enabled') === 'true';
+            if (!lockEnabled) {
+                applyAppLockState(false);
+                return;
+            }
+
+            // Check session unlock
+            const sessionUnlocked = sessionStorage.getItem('ssm_unlocked') === 'true';
+            if (sessionUnlocked) {
+                applyAppLockState(false);
+                return;
+            }
+
+            // Check device remember token validity
+            const rememberToken = safeStorage.getItem('ssm_device_remember_token');
+            const rememberExpiry = safeStorage.getItem('ssm_device_remember_expiry');
+            if (rememberToken && rememberExpiry) {
+                const now = new Date().getTime();
+                if (now < parseInt(rememberExpiry)) {
+                    applyAppLockState(false);
+                    return;
+                }
+            }
+
+            // Apply lock screen
+            applyAppLockState(true);
+            setTimeout(() => {
+                const input = document.getElementById('lock-password-input');
+                if (input) input.focus();
+            }, 100);
+        }
+
+        function applyAppLockState(isLocked) {
+            const lockScreen = document.getElementById('app-lock-screen');
+            const sidebar = document.querySelector('aside');
+            const main = document.querySelector('main');
+            const topBar = document.getElementById('mobile-top-bar');
+            const navBar = document.querySelector('.mobile-nav-bar');
+            
+            if (isLocked) {
+                if (lockScreen) {
+                    lockScreen.classList.remove('hidden');
+                    lockScreen.classList.remove('fade-out');
+                }
+                if (sidebar) sidebar.style.visibility = 'hidden';
+                if (main) main.style.visibility = 'hidden';
+                if (topBar) topBar.style.visibility = 'hidden';
+                if (navBar) navBar.style.visibility = 'hidden';
+            } else {
+                if (lockScreen) {
+                    lockScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        lockScreen.classList.add('hidden');
+                    }, 400);
+                }
+                if (sidebar) sidebar.style.visibility = '';
+                if (main) main.style.visibility = '';
+                if (topBar) topBar.style.visibility = '';
+                if (navBar) navBar.style.visibility = '';
+            }
+        }
+
+        async function attemptUnlock() {
+            const input = document.getElementById('lock-password-input');
+            const errorMsg = document.getElementById('lock-error-msg');
+            const container = document.querySelector('.lock-screen-container');
+            const rememberCheckbox = document.getElementById('lock-remember-device');
+
+            if (!input) return;
+            const enteredPassword = input.value;
+            const savedHash = safeStorage.getItem('ssm_password_hash');
+
+            if (!savedHash) {
+                // Edge case: Lock enabled but no password set -> force reset lock
+                safeStorage.setItem('ssm_lock_enabled', 'false');
+                applyAppLockState(false);
+                return;
+            }
+
+            const enteredHash = await sha256(enteredPassword);
+
+            if (enteredHash === savedHash) {
+                // Correct Password!
+                sessionStorage.setItem('ssm_unlocked', 'true');
+                errorMsg.textContent = '';
+                input.value = '';
+
+                // Handle Remember Device option (30 days validity)
+                if (rememberCheckbox && rememberCheckbox.checked) {
+                    const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+                    const expiry = new Date().getTime() + (30 * 24 * 60 * 60 * 1000); // 30 days
+                    safeStorage.setItem('ssm_device_remember_token', token);
+                    safeStorage.setItem('ssm_device_remember_expiry', expiry.toString());
+                }
+
+                applyAppLockState(false);
+            } else {
+                // Wrong Password!
+                errorMsg.textContent = '비밀번호가 일치하지 않습니다.';
+                input.value = '';
+                input.focus();
+
+                // Shake animation trigger
+                if (container) {
+                    container.classList.remove('shake');
+                    void container.offsetWidth; // Trigger reflow to restart animation
+                    container.classList.add('shake');
+                }
+            }
+        }
+
+        function handleLockInputKeydown(e) {
+            if (e.key === 'Enter') {
+                attemptUnlock();
+            }
+        }
+
+        function toggleLockPasswordVisibility() {
+            const input = document.getElementById('lock-password-input');
+            const eye = document.getElementById('lock-toggle-visibility');
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eye.textContent = '🙈';
+                } else {
+                    input.type = 'password';
+                    eye.textContent = '👁️';
+                }
+            }
+        }
+
+        // Settings actions for security
+        function initLockSettingsView() {
+            const lockEnabled = safeStorage.getItem('ssm_lock_enabled') === 'true';
+            const checkbox = document.getElementById('setting-lock-enabled');
+            const form = document.getElementById('settings-password-form');
+            const currentWrapper = document.getElementById('settings-pass-current-wrapper');
+
+            if (checkbox) checkbox.checked = lockEnabled;
+            
+            const savedHash = safeStorage.getItem('ssm_password_hash');
+
+            if (lockEnabled) {
+                if (form) form.classList.remove('hidden');
+                if (currentWrapper) currentWrapper.classList.remove('hidden');
+            } else {
+                if (savedHash) {
+                    // Password exists but lock disabled -> show form to activate
+                    if (form) form.classList.remove('hidden');
+                    if (currentWrapper) currentWrapper.classList.remove('hidden');
+                } else {
+                    // No password set -> show form to configure initial password
+                    if (form) form.classList.remove('hidden');
+                    if (currentWrapper) currentWrapper.classList.add('hidden'); // Hide current password wrapper
+                }
+            }
+        }
+
+        function toggleLockEnabledSetting() {
+            const checkbox = document.getElementById('setting-lock-enabled');
+            const form = document.getElementById('settings-password-form');
+            const savedHash = safeStorage.getItem('ssm_password_hash');
+            const currentWrapper = document.getElementById('settings-pass-current-wrapper');
+
+            if (checkbox.checked) {
+                if (form) form.classList.remove('hidden');
+                if (!savedHash) {
+                    if (currentWrapper) currentWrapper.classList.add('hidden');
+                } else {
+                    if (currentWrapper) currentWrapper.classList.remove('hidden');
+                }
+            } else {
+                // Request current password verification before disabling lock
+                if (!savedHash) {
+                    // No password exists, safe to turn off
+                    safeStorage.setItem('ssm_lock_enabled', 'false');
+                    if (form) form.classList.add('hidden');
+                } else {
+                    // Force them to type the password in the form to confirm unchecking
+                    checkbox.checked = true; // Undo checkbox state until verified
+                    alert('보안 잠금을 해제하려면 아래 [현재 비밀번호]와 새 비밀번호 필드를 비워두고 [저장]을 눌러 해제해 주세요.');
+                }
+            }
+        }
+
+        async function saveNewPassword() {
+            const currentInput = document.getElementById('setting-pass-current');
+            const newInput = document.getElementById('setting-pass-new');
+            const confirmInput = document.getElementById('setting-pass-confirm');
+            const errorMsg = document.getElementById('settings-pass-error');
+            const checkbox = document.getElementById('setting-lock-enabled');
+
+            const savedHash = safeStorage.getItem('ssm_password_hash');
+
+            // 1. If password exists, check current password
+            if (savedHash) {
+                const currentVal = currentInput.value;
+                const currentHash = await sha256(currentVal);
+                if (currentHash !== savedHash) {
+                    errorMsg.textContent = '현재 비밀번호가 일치하지 않습니다.';
+                    return;
+                }
+            }
+
+            // 2. If trying to turn off lock (empty new password fields)
+            if (newInput.value === '' && confirmInput.value === '') {
+                safeStorage.removeItem('ssm_password_hash');
+                safeStorage.setItem('ssm_lock_enabled', 'false');
+                safeStorage.removeItem('ssm_device_remember_token');
+                safeStorage.removeItem('ssm_device_remember_expiry');
+                if (checkbox) checkbox.checked = false;
+                
+                currentInput.value = '';
+                errorMsg.textContent = '';
+                alert('비밀번호 잠금이 해제되고 제거되었습니다.');
+                initLockSettingsView();
+                return;
+            }
+
+            // 3. Check new password match
+            if (newInput.value.length < 4) {
+                errorMsg.textContent = '비밀번호는 최소 4자리 이상이어야 합니다.';
+                return;
+            }
+
+            if (newInput.value !== confirmInput.value) {
+                errorMsg.textContent = '새 비밀번호와 비밀번호 확인이 일치하지 않습니다.';
+                return;
+            }
+
+            // 4. Save new password hash
+            const newHash = await sha256(newInput.value);
+            safeStorage.setItem('ssm_password_hash', newHash);
+            safeStorage.setItem('ssm_lock_enabled', 'true');
+            if (checkbox) checkbox.checked = true;
+
+            currentInput.value = '';
+            newInput.value = '';
+            confirmInput.value = '';
+            errorMsg.textContent = '';
+
+            alert('비밀번호 보안 설정이 변경 및 저장되었습니다!');
+            initLockSettingsView();
+        }
 
         function initDatabase() {
             // Load organizations
