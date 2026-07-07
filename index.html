@@ -950,7 +950,7 @@
                 -webkit-overflow-scrolling: touch;
                 border-radius: 8px;
             }
-            #local-calendar-container table {
+            #local-calendar-container table, #local-calendar-container > div {
                 min-width: 640px !important; /* Force a minimum readable width for 7 days week grid */
             }
             /* Hide vertical sidebar completely in portrait mode */
@@ -1092,6 +1092,34 @@
             .settings-grid {
                 grid-template-columns: 1fr !important;
                 gap: 1.25rem !important;
+            }
+
+            /* Stack Summarizer grid and buttons on mobile */
+            .summarizer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
+            }
+            .summarizer-actions {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+            .summarizer-actions button {
+                width: 100% !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Stack Chatbot controls on mobile */
+            .chatbot-header-actions {
+                width: 100% !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+            }
+            .chatbot-header-actions input, .chatbot-header-actions button {
+                flex: 1 1 auto !important;
+                width: 100% !important;
+                white-space: nowrap !important;
             }
 
             /* Allow dashboard log items to wrap date properly without squeezing text */
@@ -1658,7 +1686,7 @@
                 </div>
             </header>
 
-            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem;">
+            <div class="summarizer-grid" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem;">
                 <div class="glass-card">
                     <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: white;">📄 녹취 텍스트 붙여넣기</h3>
                     
@@ -1700,7 +1728,7 @@
                         <div id="summarizer-result-preview" class="md-preview hidden" style="max-height: 380px;"></div>
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                    <div class="summarizer-actions" style="display:flex; justify-content:flex-end; gap:0.75rem;">
                         <button class="btn" onclick="copySummarizerToClipboard()">📋 클립보드 복사</button>
                         <button class="btn btn-accent" onclick="downloadSummarizerAsObsidianMD()">📂 옵시디언 MD 다운로드</button>
                         <button class="btn btn-primary" onclick="saveSummarizerToMemberLog()" id="btn-save-summarizer-log" disabled>💾 목회 기록으로 저장</button>
@@ -1718,7 +1746,7 @@
                     <h1 class="page-title">💬 AI 목회 비서 챗봇</h1>
                     <p class="page-desc">등록된 성도 명단 및 심방/상담/기도제목 기록 데이터를 기반으로 질문에 대답합니다.</p>
                 </div>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
+                <div class="chatbot-header-actions" style="display:flex; gap:0.5rem; align-items:center;">
                     <input type="text" id="chat-search-input" class="form-control" placeholder="🔍 대화 검색..." oninput="searchChatMessages()" style="width:160px; padding:0.3rem 0.6rem; height:32px; font-size:0.8rem; margin-bottom:0;">
                     <button class="btn btn-primary" onclick="downloadChatHistoryMarkdown()" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; height:32px; display:flex; align-items:center; gap:0.25rem;">📥 대화 백업 (.md)</button>
                     <button class="btn btn-accent" onclick="clearChatbotHistory()" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; height:32px;">대화 초기화</button>
