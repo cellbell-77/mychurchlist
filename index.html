@@ -817,25 +817,74 @@
             display: none !important;
         }
 
-        /* Mobile / Tablet Responsive Drawer styles */
-        @media (max-width: 900px) {
-            /* Reset Safari default iOS input/button appearances */
-            input, select, textarea {
-                -webkit-appearance: none;
-                appearance: none;
-                font-size: 16px !important; /* Prevent iOS Auto-Zoom on Focus */
-                border-radius: 8px;
+        /* Mobile Horizontal Tab Menu Styles */
+        .mobile-nav-bar {
+            display: none;
+            background: rgba(10, 8, 22, 0.95);
+            border-bottom: 1px solid var(--card-border);
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 50px; /* Below mobile top bar */
+            z-index: 99;
+            gap: 0.5rem;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        .mobile-nav-bar::-webkit-scrollbar {
+            display: none;
+        }
+        .mobile-nav-item {
+            display: inline-block;
+            margin-right: 0.35rem;
+        }
+        .mobile-nav-item button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.45rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .mobile-nav-item.active button {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Light theme overrides for Mobile Horizontal Tab Menu */
+        body.light-theme .mobile-nav-bar {
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        body.light-theme .mobile-nav-item button {
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #475569;
+        }
+        body.light-theme .mobile-nav-item.active button {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Mobile / Tablet Portrait Media Query */
+        @media (max-width: 1024px) and (orientation: portrait), (max-width: 500px) {
+            /* Hide vertical sidebar completely in portrait mode */
+            aside {
+                display: none !important;
             }
             
-            aside {
-                transform: translateX(-100%);
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: 8px 0 30px rgba(0,0,0,0.6);
-                width: 260px;
-                z-index: 1010; /* Above overlay */
+            #mobile-top-bar {
+                display: flex !important;
             }
-            aside.open {
-                transform: translateX(0);
+            .mobile-nav-bar {
+                display: flex !important;
             }
             
             main {
@@ -844,6 +893,15 @@
                 max-width: 100% !important;
                 padding: 1rem 0.75rem !important;
                 -webkit-overflow-scrolling: touch;
+                margin-top: 0 !important;
+            }
+            
+            /* Reset Safari default iOS input/button appearances */
+            input, select, textarea {
+                -webkit-appearance: none;
+                appearance: none;
+                font-size: 16px !important; /* Prevent iOS Auto-Zoom on Focus */
+                border-radius: 8px;
             }
             
             /* Enable bouncy inertia smooth scrolling on mobile elements */
@@ -878,10 +936,6 @@
             /* Table responsive wrapping */
             .table-responsive {
                 overflow-x: auto !important;
-            }
-            
-            #mobile-top-bar {
-                display: flex !important;
             }
             
             /* Light theme responsive */
@@ -956,12 +1010,34 @@
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 98; backdrop-filter: blur(2px);"></div>
 
     <!-- Mobile Top Navigation Bar -->
-    <div id="mobile-top-bar" style="display: none; background: rgba(10, 8, 22, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--card-border); padding: 0.75rem 1rem; position: sticky; top: 0; z-index: 99; justify-content: space-between; align-items: center; width: 100%;">
+    <div id="mobile-top-bar" style="display: none; background: rgba(10, 8, 22, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--card-border); padding: 0.75rem 1rem; position: sticky; top: 0; z-index: 99; justify-content: space-between; align-items: center; width: 100%; height: 50px;">
         <div style="display:flex; align-items:center; gap:0.5rem;">
             <span style="font-size:1.5rem;">⛪</span>
             <span style="font-weight:700; font-size:0.95rem; letter-spacing:0.5px; color:white;">성도섬김마스터</span>
         </div>
-        <button class="btn" onclick="toggleMobileSidebar()" style="padding:0.35rem 0.6rem; font-size:0.85rem; border-color:var(--primary); background:var(--primary-glow); color:white;">☰ 메뉴</button>
+        <button class="btn" id="btn-theme-toggle-mobile" onclick="toggleTheme()" style="padding:0.3rem 0.6rem; font-size:0.75rem; border-radius:6px; height:auto; border-color:var(--primary); color:white; background:rgba(139, 92, 246, 0.15);">☀️ 라이트</button>
+    </div>
+
+    <!-- Mobile Horizontal Tab Menu (Always Visible in Portrait) -->
+    <div class="mobile-nav-bar">
+        <div class="mobile-nav-item active" data-target="view-dashboard">
+            <button>📊 대시보드</button>
+        </div>
+        <div class="mobile-nav-item" data-target="view-members">
+            <button>👥 성도관리</button>
+        </div>
+        <div class="mobile-nav-item" data-target="view-schedules">
+            <button>🗓️ 일정관리</button>
+        </div>
+        <div class="mobile-nav-item" data-target="view-chatbot">
+            <button>🤖 AI대화방</button>
+        </div>
+        <div class="mobile-nav-item" data-target="view-summarizer">
+            <button>✍️ 요약정리</button>
+        </div>
+        <div class="mobile-nav-item" data-target="view-settings">
+            <button>⚙️ 설정관리</button>
+        </div>
     </div>
 
     <!-- SIDEBAR NAVIGATION -->
@@ -2173,12 +2249,15 @@
             // Load Theme
             const storedTheme = safeStorage.getItem('ssm_theme');
             const btn = document.getElementById('btn-theme-toggle');
+            const btnMobile = document.getElementById('btn-theme-toggle-mobile');
             if (storedTheme === 'light') {
                 document.body.classList.add('light-theme');
                 if (btn) btn.textContent = '🌙 다크';
+                if (btnMobile) btnMobile.textContent = '🌙 다크';
             } else {
                 document.body.classList.remove('light-theme');
                 if (btn) btn.textContent = '☀️ 라이트';
+                if (btnMobile) btnMobile.textContent = '☀️ 라이트';
             }
         });
 
@@ -2340,16 +2419,23 @@
         // 📊 VIEW CONTROLLER: TABS NAVIGATION
         // ==========================================
         function setupSidebarNav() {
-            const navItems = document.querySelectorAll('.nav-item');
+            const navItems = document.querySelectorAll('.nav-item, .mobile-nav-item');
             const viewPanels = document.querySelectorAll('.view-panel');
 
             navItems.forEach(item => {
                 const btn = item.querySelector('button');
                 btn.addEventListener('click', () => {
-                    navItems.forEach(n => n.classList.remove('active'));
-                    item.classList.add('active');
-
+                    // Sync active state on both sidebar items and mobile tab items
                     const target = item.getAttribute('data-target');
+                    
+                    document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => {
+                        if (n.getAttribute('data-target') === target) {
+                            n.classList.add('active');
+                        } else {
+                            n.classList.remove('active');
+                        }
+                    });
+
                     activeTab = target;
 
                     viewPanels.forEach(p => p.classList.add('hidden'));
@@ -2379,7 +2465,7 @@
                         renderFolderExplorer();
                     }
 
-                    // Auto-close mobile sidebar drawer on menu click
+                    // Auto-close mobile sidebar drawer on menu click (fallback)
                     const aside = document.querySelector('aside');
                     if (aside) aside.classList.remove('open');
                     const overlay = document.getElementById('sidebar-overlay');
@@ -5434,13 +5520,16 @@ ${m.notes || '등록된 메모가 없습니다.'}
         function toggleTheme() {
             const body = document.body;
             const btn = document.getElementById('btn-theme-toggle');
+            const btnMobile = document.getElementById('btn-theme-toggle-mobile');
             if (body.classList.contains('light-theme')) {
                 body.classList.remove('light-theme');
                 if (btn) btn.textContent = '☀️ 라이트';
+                if (btnMobile) btnMobile.textContent = '☀️ 라이트';
                 safeStorage.setItem('ssm_theme', 'dark');
             } else {
                 body.classList.add('light-theme');
                 if (btn) btn.textContent = '🌙 다크';
+                if (btnMobile) btnMobile.textContent = '🌙 다크';
                 safeStorage.setItem('ssm_theme', 'light');
             }
 
