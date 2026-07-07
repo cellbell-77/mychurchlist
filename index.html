@@ -875,6 +875,9 @@
 
         /* Mobile / Tablet Portrait Media Query */
         @media (max-width: 1024px) and (orientation: portrait), (max-width: 500px) {
+            body {
+                flex-direction: column !important;
+            }
             /* Hide vertical sidebar completely in portrait mode */
             aside {
                 display: none !important;
