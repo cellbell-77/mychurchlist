@@ -1167,7 +1167,119 @@
             }
             .modal-header {
                 padding-bottom: 0.5rem !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.5rem !important;
+                padding-right: 2.5rem !important;
             }
+            .modal-header > div:nth-child(2) {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+            .modal-header button.btn {
+                padding: 0.35rem 0.6rem !important;
+                font-size: 0.75rem !important;
+                white-space: nowrap !important;
+            }
+            .modal-header button[onclick^="close"] {
+                position: absolute !important;
+                top: 0.5rem !important;
+                right: 0.5rem !important;
+                margin: 0 !important;
+            }
+            
+            /* Stack search/filters in phone landscape view due to narrow main panel */
+            .table-controls {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+            .search-wrapper {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .filter-controls {
+                width: 100% !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+            }
+            .filter-controls select {
+                flex: 1 1 calc(50% - 0.25rem) !important;
+                max-width: calc(50% - 0.25rem) !important;
+                box-sizing: border-box !important;
+            }
+            
+            /* Stack settings & summarizer grids in phone landscape */
+            .settings-grid, .summarizer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
+            }
+            .summarizer-actions {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+            .summarizer-actions button {
+                width: 100% !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Enable swipeable calendar scroll in phone landscape */
+            #local-calendar-container {
+                overflow-x: auto !important;
+                width: 100% !important;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 8px;
+            }
+            #local-calendar-container table, #local-calendar-container > div {
+                min-width: 640px !important;
+            }
+            .calendar-controls-wrapper {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.5rem !important;
+            }
+            .calendar-nav-buttons {
+                justify-content: space-between !important;
+                width: 100% !important;
+            }
+            #calendar-filter-wrapper, #calendar-filter-type {
+                width: 100% !important;
+            }
+            
+            /* Tabs bar in member detail modal */
+            .detail-tabs {
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 0.35rem !important;
+                gap: 0.75rem !important;
+            }
+            .detail-tabs button {
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+            }
+            
+            /* Prayer header inside member detail modal */
+            .prayer-header-row {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.5rem !important;
+            }
+            .prayer-header-row > div {
+                display: flex !important;
+                width: 100% !important;
+                gap: 0.5rem !important;
+            }
+            #prayer-search-input {
+                flex: 1 !important;
+                width: auto !important;
+            }
+            
+            /* Sidebar layout optimizations for landscape height */
             aside {
                 padding: 1rem 0.75rem !important;
                 gap: 1rem !important;
