@@ -4760,7 +4760,25 @@
                             
                             let hasData = false;
                             headers.forEach((header, colIdx) => {
-                                const field = fieldMapping[header];
+                                let field = fieldMapping[header];
+                                
+                                // Dynamic duplicate & alias resolution helper
+                                if (header === '생년월일' || header === '출생년도') {
+                                    field = 'birth';
+                                } else if (header === '연락처' || header === '전화번호') {
+                                    field = 'phone';
+                                } else if (header === '교회') {
+                                    // Standard church vs Evangelist current church based on index
+                                    field = (colIdx < 10) ? 'church' : 'evaCurrentChurch';
+                                } else if (header === '현재교회') {
+                                    field = 'evaCurrentChurch';
+                                } else if (header === '직분') {
+                                    // Standard duty vs Evangelist role based on index
+                                    field = (colIdx < 10) ? 'duty' : 'evaRole';
+                                } else if (header === '전도인직책') {
+                                    field = 'evaRole';
+                                }
+
                                 if (field) {
                                     let val = row[colIdx];
                                     if (val !== undefined && val !== null) {
@@ -4914,12 +4932,7 @@
                 });
             });
 
-            // 3. Register members and run sync mapping
-            parsedMembersBuffer.forEach(m => {
-                members.push(m);
-            });
-
-            // 4. Run smart UPSERT (match by Name + Phone or Name)
+            // 3. Run smart UPSERT (match by Name + Phone or Name)
             parsedMembersBuffer.forEach(newM => {
                 // Try to find matching existing member
                 const matchIdx = members.findIndex(existingM => {
