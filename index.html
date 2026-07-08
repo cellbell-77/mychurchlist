@@ -4611,19 +4611,32 @@
         }
 
         function downloadExcelTemplate() {
-            const headers = [
+            const standardHeaders = [
                 "이름", "성별", "출생년도", "구원일", "직분", "교회", "구역", "봉사부서", "교제부서", "소속그룹", "전화번호", "주소", "가족사항", "메모"
             ];
-            const data = [
-                headers,
+            const standardData = [
+                standardHeaders,
                 ["김철수", "남", "1980", "2010-05-15", "서리집사", "본교회", "5구역", "중국선교부", "어머니회", "임원회", "010-1234-5678", "서울시 마포구", "배우자 이영희, 자녀 1남", "신앙이 돈독하며 매주 구역 모임 참석함"]
             ];
+
+            const evaHeaders = [
+                "이름", "성별", "출생년도", "구원일", "직분", "교회", "구역", "봉사부서", "교제부서", "소속그룹", "전화번호", "주소", "가족사항", "메모",
+                "현재교회", "전도인직책", "전도경력", "학력사항", "교회이력", "사회경력"
+            ];
+            const evaData = [
+                evaHeaders,
+                ["이출재", "남", "1965", "1980-08-15", "전도사", "인천교회", "구역없음", "미지정", "은장회", "전도인", "010-9876-5432", "인천시 남동구", "배우자 한선희", "2026-06-01일자로 인천교회 시무 부임함", "인천교회", "부사역자", "2026-06-01 | 교회이동 | 인천 | 부사역자 2022-01-01 | 교회이동 | 포항 | 담임목사", "1980-03 ~ 1983-02 | 순천 고등학교 | 졸업", "1985-09-01 ~ 1990-08-31 | 광주 | 장", "1988-09-00 ~ 1991-07-00 | 광산레미콘 | 부장"]
+            ];
             
-            const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "성도명단양식");
             
-            XLSX.writeFile(wb, "성도명단_등록양식.xlsx");
+            const wsStandard = XLSX.utils.aoa_to_sheet(standardData);
+            XLSX.utils.book_append_sheet(wb, wsStandard, "일반성도 명단양식");
+            
+            const wsEva = XLSX.utils.aoa_to_sheet(evaData);
+            XLSX.utils.book_append_sheet(wb, wsEva, "전도인 명단양식");
+            
+            XLSX.writeFile(wb, "성도및전도인_등록양식.xlsx");
         }
 
         function handleExcelUpload(event) {
@@ -4662,7 +4675,13 @@
                         "전화번호": "phone",
                         "주소": "address",
                         "가족사항": "family",
-                        "메모": "notes"
+                        "메모": "notes",
+                        "현재교회": "evaCurrentChurch",
+                        "전도인직책": "evaRole",
+                        "전도경력": "evaCareer",
+                        "학력사항": "evaEducation",
+                        "교회이력": "evaChurchHistory",
+                        "사회경력": "evaSocialCareer"
                     };
 
                     parsedMembersBuffer = [];
@@ -4692,6 +4711,20 @@
                             }
                         });
                         
+                        // Extract evangelistDetails if present
+                        let hasEvaData = false;
+                        const evaDetails = {};
+                        if (memberObj.evaCurrentChurch) { evaDetails.currentChurch = memberObj.evaCurrentChurch; delete memberObj.evaCurrentChurch; hasEvaData = true; }
+                        if (memberObj.evaRole) { evaDetails.role = memberObj.evaRole; delete memberObj.evaRole; hasEvaData = true; }
+                        if (memberObj.evaCareer) { evaDetails.evangelismCareer = memberObj.evaCareer; delete memberObj.evaCareer; hasEvaData = true; }
+                        if (memberObj.evaEducation) { evaDetails.education = memberObj.evaEducation; delete memberObj.evaEducation; hasEvaData = true; }
+                        if (memberObj.evaChurchHistory) { evaDetails.churchHistory = memberObj.evaChurchHistory; delete memberObj.evaChurchHistory; hasEvaData = true; }
+                        if (memberObj.evaSocialCareer) { evaDetails.socialCareer = memberObj.evaSocialCareer; delete memberObj.evaSocialCareer; hasEvaData = true; }
+                        
+                        if (hasEvaData || memberObj.group === '전도인') {
+                            memberObj.evangelistDetails = evaDetails;
+                        }
+
                         if (hasData && memberObj.name) {
                             if (memberObj.gender) {
                                 if (memberObj.gender.includes('남')) memberObj.gender = '남';
