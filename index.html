@@ -2192,12 +2192,49 @@
                  <!-- Relation Links System -->
                  <div class="form-group" style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem;">
                      <label style="color: var(--primary-hover); font-weight: 600; font-size: 0.85rem;">🔗 가족 및 인적 링크 설정 (등록된 다른 성도와 상호 연결)</label>
-                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                         <select id="member-modal-rel-target" class="form-control" style="flex:1.2;">
-                             <!-- Dynamic loading of members -->
-                         </select>
-                         <input type="text" id="member-modal-rel-type" class="form-control" placeholder="관계명 (예: 배우자, 인도자)" style="flex:1;">
-                         <button type="button" class="btn btn-primary" onclick="addMemberRelationInModal()">추가</button>
+                     <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
+                         <div style="display:flex; gap:0.5rem;">
+                             <select id="member-modal-rel-target" class="form-control" style="flex:1.5;">
+                                 <!-- Dynamic loading of members -->
+                             </select>
+                             <select id="member-modal-rel-type-select" class="form-control" style="flex:1;" onchange="handleRelationTypeSelectChange()">
+                                 <option value="부부">부부 (쌍방)</option>
+                                 <option value="형제/자매">형제/자매 (쌍방)</option>
+                                 <option value="부모">부모 (상대: 자녀)</option>
+                                 <option value="자녀">자녀 (상대: 부모)</option>
+                                 <option value="조부모">조부모 (상대: 손주)</option>
+                                 <option value="손주">손주 (상대: 조부모)</option>
+                                 <option value="인도자">인도자 (상대: 전도대상자)</option>
+                                 <option value="전도대상자">전도대상자 (상대: 인도자)</option>
+                                 <option value="회사 선임">회사 선임 (상대: 후임)</option>
+                                 <option value="회사 후임">회사 후임 (상대: 선임)</option>
+                                 <option value="회사동료">회사동료 (쌍방)</option>
+                                 <option value="학교 선배">학교 선배 (상대: 후배)</option>
+                                 <option value="학교 후배">학교 후배 (상대: 선배)</option>
+                                 <option value="친척">친척(삼촌/고모/이모 등) (상대: 조카)</option>
+                                 <option value="조카">조카 (상대: 친척)</option>
+                                 <option value="친구">친구 (쌍방)</option>
+                                 <option value="지인">지인 (쌍방)</option>
+                                 <option value="custom">직접 수기 입력...</option>
+                             </select>
+                             <button type="button" class="btn btn-primary" onclick="addMemberRelationInModal()">추가</button>
+                         </div>
+                         
+                         <!-- Custom manual input settings (hidden by default) -->
+                         <div id="member-modal-rel-custom-panel" class="hidden" style="display:flex; flex-direction:column; gap:0.5rem; background:rgba(255,255,255,0.02); border:1px dashed var(--card-border); padding:0.75rem; border-radius:8px;">
+                             <div style="display:flex; justify-content:space-between; align-items:center;">
+                                 <span style="font-size:0.75rem; color:var(--text-secondary);">수기 연결 방식:</span>
+                                 <select id="member-modal-rel-custom-mode" class="form-control" style="width:auto; padding:0.2rem; font-size:0.75rem; height:28px;" onchange="handleCustomRelationModeChange()">
+                                     <option value="single">단방향 링크</option>
+                                     <option value="symmetric">대칭형 쌍방 링크</option>
+                                     <option value="asymmetric">비대칭형 쌍방 링크</option>
+                                 </select>
+                             </div>
+                             <div style="display:flex; gap:0.5rem;" id="member-modal-rel-custom-inputs">
+                                 <input type="text" id="member-modal-rel-custom-val1" class="form-control" placeholder="관계명 입력 (예: 이웃)" style="flex:1;">
+                                 <input type="text" id="member-modal-rel-custom-val2" class="form-control hidden" placeholder="상대방이 부르는 호칭 (예: 집주인)" style="flex:1;">
+                             </div>
+                         </div>
                      </div>
                      <div id="member-modal-rel-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
                          <!-- Relation tags with delete button -->
@@ -4041,16 +4078,59 @@
             });
         }
 
+        // Relation custom panels toggle
+        function handleRelationTypeSelectChange() {
+            const select = document.getElementById('member-modal-rel-type-select');
+            const panel = document.getElementById('member-modal-rel-custom-panel');
+            if (select.value === 'custom') {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function handleCustomRelationModeChange() {
+            const mode = document.getElementById('member-modal-rel-custom-mode').value;
+            const val2 = document.getElementById('member-modal-rel-custom-val2');
+            if (mode === 'asymmetric') {
+                val2.classList.remove('hidden');
+            } else {
+                val2.classList.add('hidden');
+            }
+        }
+
         function addMemberRelationInModal() {
             const targetId = document.getElementById('member-modal-rel-target').value;
-            const relType = document.getElementById('member-modal-rel-type').value.trim();
+            const selectVal = document.getElementById('member-modal-rel-type-select').value;
+            
+            let relType = selectVal;
+            let customMode = null;
+            let customInverseType = null;
+
+            if (selectVal === 'custom') {
+                const val1 = document.getElementById('member-modal-rel-custom-val1').value.trim();
+                const val2 = document.getElementById('member-modal-rel-custom-val2').value.trim();
+                const mode = document.getElementById('member-modal-rel-custom-mode').value;
+
+                if (!val1) {
+                    alert('직접 입력할 관계명을 입력해 주세요.');
+                    return;
+                }
+                
+                relType = val1;
+                customMode = mode;
+                
+                if (mode === 'asymmetric') {
+                    if (!val2) {
+                        alert('상대방이 나를 부를 호칭도 입력해 주세요.');
+                        return;
+                    }
+                    customInverseType = val2;
+                }
+            }
 
             if (!targetId) {
                 alert('연결할 대상 성도를 선택해 주세요.');
-                return;
-            }
-            if (!relType) {
-                alert('관계명(예: 배우자, 자녀, 인도자)을 입력해 주세요.');
                 return;
             }
 
@@ -4067,10 +4147,14 @@
                 targetId: targetId,
                 targetName: targetM.name,
                 targetDuty: targetM.duty,
-                type: relType
+                type: relType,
+                customMode: customMode,
+                customInverseType: customInverseType
             });
 
             document.getElementById('member-modal-relations-data').value = JSON.stringify(modalRelations);
+            
+            // Clean inputs
             document.getElementById('member-modal-rel-type-select').value = '부부';
             document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
             document.getElementById('member-modal-rel-custom-val1').value = '';
