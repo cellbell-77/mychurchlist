@@ -2021,227 +2021,234 @@
                 <h3 id="member-modal-title" style="color: white; font-size: 1.2rem; font-weight:700;">➕ 개별 성도 수기 등록</h3>
                 <button style="background:transparent; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer;" onclick="closeMemberModal()">✕</button>
             </div>
-            <div class="modal-body">
+                        <div class="modal-body">
                 <input type="hidden" id="member-modal-id">
-                 
-                 <!-- Photo Upload Row -->
-                 <div class="form-group" style="margin-bottom: 1rem;">
-                     <label style="font-size:0.85rem; color:var(--text-secondary); font-weight:500;">성도 사진 등록</label>
-                     <div style="display:flex; gap:1rem; align-items:center; margin-top:0.25rem;">
-                         <div id="member-modal-photo-preview" style="width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px solid var(--card-border); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.5rem; color:var(--text-secondary);">👤</div>
-                         <div style="flex:1;">
-                             <input type="file" id="member-modal-photo-input" accept="image/*" class="form-control" style="padding:0.25rem; font-size:0.8rem;" onchange="handleModalPhotoUpload(event)">
-                             <input type="hidden" id="member-modal-photo-data">
+                
+                <div class="modal-two-columns">
+                    <!-- Left Column: General Info -->
+                    <div class="modal-left-column">
+                         <!-- Photo Upload Row -->
+                         <div class="form-group" style="margin-bottom: 0.5rem;">
+                             <label style="font-size:0.85rem; color:var(--text-secondary); font-weight:500;">성도 사진 등록</label>
+                             <div style="display:flex; gap:1rem; align-items:center; margin-top:0.25rem;">
+                                 <div id="member-modal-photo-preview" style="width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px solid var(--card-border); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.5rem; color:var(--text-secondary);">👤</div>
+                                 <div style="flex:1;">
+                                     <input type="file" id="member-modal-photo-input" accept="image/*" class="form-control" style="padding:0.25rem; font-size:0.8rem;" onchange="handleModalPhotoUpload(event)">
+                                     <input type="hidden" id="member-modal-photo-data">
+                                 </div>
+                             </div>
                          </div>
-                     </div>
-                 </div>
 
-                 <div class="form-row">
-                     <div class="form-group">
-                         <label for="member-modal-name">이름 *</label>
-                         <input type="text" id="member-modal-name" class="form-control" required>
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-gender">성별</label>
-                         <select id="member-modal-gender" class="form-control">
-                             <option value="남">남성</option>
-                             <option value="여">여성</option>
-                         </select>
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                         <label for="member-modal-birth">출생년도 (4자리)</label>
-                         <input type="number" id="member-modal-birth" class="form-control" placeholder="예: 1980">
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-salvation">구원일</label>
-                         <input type="date" id="member-modal-salvation" class="form-control">
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                         <label for="member-modal-phone">전화번호</label>
-                         <input type="text" id="member-modal-phone" class="form-control" placeholder="예: 010-1234-5678">
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-church">교회</label>
-                         <input type="text" id="member-modal-church" class="form-control" placeholder="예: 서울교회">
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                          <label for="member-modal-parish" style="display:flex; justify-content:space-between; align-items:center;">
-                              <span>구역 소속</span>
-                              <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddParish()">+ 추가</span>
-                          </label>
-                         <select id="member-modal-parish" class="form-control">
-                             <!-- dynamic options -->
-                         </select>
-                     </div>
-                     <div class="form-group">
-                          <label for="member-modal-dept" style="display:flex; justify-content:space-between; align-items:center;">
-                              <span>봉사부서 소속</span>
-                              <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddDept()">+ 추가</span>
-                          </label>
-                         <select id="member-modal-dept" class="form-control">
-                             <!-- dynamic options -->
-                         </select>
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                          <label for="member-modal-fellowship" style="display:flex; justify-content:space-between; align-items:center;">
-                              <span>교제부서 소속</span>
-                              <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddFellowship()">+ 추가</span>
-                          </label>
-                          <select id="member-modal-fellowship" class="form-control">
-                              <!-- dynamic options -->
-                          </select>
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-duty">직분</label>
-                         <input type="text" id="member-modal-duty" class="form-control" placeholder="예: 서리집사, 봉사직분, 권사 등">
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                          <label for="member-modal-group" style="display:flex; justify-content:space-between; align-items:center;">
-                               <span>소속 그룹</span>
-                               <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddGroup()">+ 추가</span>
-                          </label>
-                          <select id="member-modal-group" class="form-control">
-                               <!-- dynamic options -->
-                          </select>
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-address">주소</label>
-                         <input type="text" id="member-modal-address" class="form-control" placeholder="거주지 주소">
-                     </div>
-                 </div>
-                 <div class="form-group">
-                     <label for="member-modal-family">가족 사항 (수기 메모 - 등록 성도간 연결은 아래 '가족 및 인적 링크 설정'을 사용)</label>
-                     <input type="text" id="member-modal-family" class="form-control" placeholder="예: 배우자 김영희, 자녀 1남1녀 (미출석)">
-                 </div>
-                 <div class="form-group">
-                     <label for="member-modal-notes">목회적 특이사항</label>
-                     <textarea id="member-modal-notes" class="form-control" placeholder="신앙적 특징, 관심사 등 핵심 메모"></textarea>
-                 </div>
-
-                 <!-- 🤖 Evangelist Custom Fields (Dynamic panel) -->
-                 <div id="evangelist-fields-panel" class="hidden" style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                     <label style="color: var(--primary-hover); font-weight: 700; font-size: 0.85rem;">🤖 전도인 세부 프로필 추가 설정</label>
-                     <div class="form-row">
-                         <div class="form-group">
-                             <label for="member-modal-eva-church">현재 교회</label>
-                             <input type="text" id="member-modal-eva-church" class="form-control" placeholder="예: 인천교회">
-                         </div>
-                         <div class="form-group">
-                             <label for="member-modal-eva-role">직책 (전도인)</label>
-                             <select id="member-modal-eva-role" class="form-control">
-                                 <option value="">-- 직책 선택 --</option>
-                                 <option value="담임전도인">담임전도인</option>
-                                 <option value="부사역자">부사역자</option>
-                             </select>
-                         </div>
-                     </div>
-                     <div class="form-row">
-                         <div class="form-group">
-                             <label for="member-modal-eva-career">전도 경력</label>
-                             <input type="text" id="member-modal-eva-career" class="form-control" placeholder="예: 5년">
-                         </div>
-                         <div class="form-group">
-                             <label for="member-modal-eva-education">학력 사항</label>
-                             <input type="text" id="member-modal-eva-education" class="form-control" placeholder="예: 대학원 졸">
-                         </div>
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-eva-church-history">교회 이력 (수기)</label>
-                         <input type="text" id="member-modal-eva-church-history" class="form-control" placeholder="예: 대구교회, 서울남부교회">
-                     </div>
-                     <div class="form-group">
-                         <label for="member-modal-eva-social-career">사회 경력 (수기)</label>
-                         <input type="text" id="member-modal-eva-social-career" class="form-control" placeholder="예: 회사 사무직 3년">
-                     </div>
-                 </div>
-
-                 <!-- ⏳ Personal Changes & History Log Editor -->
-                 <div id="member-modal-history-section" style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem;">
-                     <label style="color: var(--primary-hover); font-weight: 700; font-size: 0.85rem;">⏳ 인적 이력 및 변동사항 편집 관리</label>
-                     <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
-                         <div style="display:flex; gap:0.5rem;">
-                             <input type="date" id="member-modal-hist-date" class="form-control" style="flex:1;">
-                             <select id="member-modal-hist-type" class="form-control" style="flex:1;">
-                                 <option value="구역">구역 변동</option>
-                                 <option value="교회">교회 변동</option>
-                                 <option value="직책">직책/직분 변동</option>
-                                 <option value="부서">부서 변동</option>
-                                 <option value="가족">가족 변동</option>
-                                 <option value="기타">기타 변동</option>
-                             </select>
-                             <input type="text" id="member-modal-hist-content" class="form-control" placeholder="예: 3구역 ➡️ 5구역" style="flex:2;">
-                             <button type="button" class="btn btn-primary" onclick="addMemberHistoryLogInModal()">추가</button>
-                         </div>
-                         
-                         <div id="member-modal-hist-list" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.5rem; max-height:120px; overflow-y:auto; border:1px solid var(--card-border); padding:0.5rem; border-radius:6px; background:rgba(0,0,0,0.15);">
-                             <!-- list of history logs -->
-                         </div>
-                     </div>
-                 </div>
-
-                 <!-- Relation Links System -->
-                 <div class="form-group" style="border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 1rem;">
-                     <label style="color: var(--primary-hover); font-weight: 600; font-size: 0.85rem;">🔗 가족 및 인적 링크 설정 (등록된 다른 성도와 상호 연결)</label>
-                     <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
-                         <div style="display:flex; gap:0.5rem;">
-                             <select id="member-modal-rel-target" class="form-control" style="flex:1.5;">
-                                 <!-- Dynamic loading of members -->
-                             </select>
-                             <select id="member-modal-rel-type-select" class="form-control" style="flex:1;" onchange="handleRelationTypeSelectChange()">
-                                 <option value="부부">부부 (쌍방)</option>
-                                 <option value="형제/자매">형제/자매 (쌍방)</option>
-                                 <option value="부모">부모 (상대: 자녀)</option>
-                                 <option value="자녀">자녀 (상대: 부모)</option>
-                                 <option value="조부모">조부모 (상대: 손주)</option>
-                                 <option value="손주">손주 (상대: 조부모)</option>
-                                 <option value="인도자">인도자 (상대: 전도대상자)</option>
-                                 <option value="전도대상자">전도대상자 (상대: 인도자)</option>
-                                 <option value="회사 선임">회사 선임 (상대: 후임)</option>
-                                 <option value="회사 후임">회사 후임 (상대: 선임)</option>
-                                 <option value="회사동료">회사동료 (쌍방)</option>
-                                 <option value="학교 선배">학교 선배 (상대: 후배)</option>
-                                 <option value="학교 후배">학교 후배 (상대: 선배)</option>
-                                 <option value="친척">친척(삼촌/고모/이모 등) (상대: 조카)</option>
-                                 <option value="조카">조카 (상대: 친척)</option>
-                                 <option value="친구">친구 (쌍방)</option>
-                                 <option value="지인">지인 (쌍방)</option>
-                                 <option value="custom">직접 수기 입력...</option>
-                             </select>
-                             <button type="button" class="btn btn-primary" onclick="addMemberRelationInModal()">추가</button>
-                         </div>
-                         
-                         <!-- Custom manual input settings (hidden by default) -->
-                         <div id="member-modal-rel-custom-panel" class="hidden" style="display:flex; flex-direction:column; gap:0.5rem; background:rgba(255,255,255,0.02); border:1px dashed var(--card-border); padding:0.75rem; border-radius:8px;">
-                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                 <span style="font-size:0.75rem; color:var(--text-secondary);">수기 연결 방식:</span>
-                                 <select id="member-modal-rel-custom-mode" class="form-control" style="width:auto; padding:0.2rem; font-size:0.75rem; height:28px;" onchange="handleCustomRelationModeChange()">
-                                     <option value="single">단방향 링크</option>
-                                     <option value="symmetric">대칭형 쌍방 링크</option>
-                                     <option value="asymmetric">비대칭형 쌍방 링크</option>
+                         <div class="form-row">
+                             <div class="form-group">
+                                 <label for="member-modal-name">이름 *</label>
+                                 <input type="text" id="member-modal-name" class="form-control" required>
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-gender">성별</label>
+                                 <select id="member-modal-gender" class="form-control">
+                                     <option value="남">남성</option>
+                                     <option value="여">여성</option>
                                  </select>
                              </div>
-                             <div style="display:flex; gap:0.5rem;" id="member-modal-rel-custom-inputs">
-                                 <input type="text" id="member-modal-rel-custom-val1" class="form-control" placeholder="관계명 입력 (예: 이웃)" style="flex:1;">
-                                 <input type="text" id="member-modal-rel-custom-val2" class="form-control hidden" placeholder="상대방이 부르는 호칭 (예: 집주인)" style="flex:1;">
+                         </div>
+                         <div class="form-row">
+                             <div class="form-group">
+                                 <label for="member-modal-birth">출생년도 (4자리)</label>
+                                 <input type="number" id="member-modal-birth" class="form-control" placeholder="예: 1980">
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-salvation">구원일</label>
+                                 <input type="date" id="member-modal-salvation" class="form-control">
                              </div>
                          </div>
-                     </div>
-                     <div id="member-modal-rel-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                         <!-- Relation tags with delete button -->
-                     </div>
-                     <input type="hidden" id="member-modal-relations-data">
-                 </div>
-            </div>
+                         <div class="form-row">
+                             <div class="form-group">
+                                 <label for="member-modal-phone">전화번호</label>
+                                 <input type="text" id="member-modal-phone" class="form-control" placeholder="예: 010-1234-5678">
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-church">교회</label>
+                                 <input type="text" id="member-modal-church" class="form-control" placeholder="예: 서울교회">
+                             </div>
+                         </div>
+                         <div class="form-row">
+                             <div class="form-group">
+                                  <label for="member-modal-parish" style="display:flex; justify-content:space-between; align-items:center;">
+                                      <span>구역 소속</span>
+                                      <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddParish()">+ 추가</span>
+                                  </label>
+                                 <select id="member-modal-parish" class="form-control">
+                                     <!-- dynamic options -->
+                                 </select>
+                             </div>
+                             <div class="form-group">
+                                  <label for="member-modal-dept" style="display:flex; justify-content:space-between; align-items:center;">
+                                      <span>봉사부서 소속</span>
+                                      <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddDept()">+ 추가</span>
+                                  </label>
+                                 <select id="member-modal-dept" class="form-control">
+                                     <!-- dynamic options -->
+                                 </select>
+                             </div>
+                         </div>
+                         <div class="form-row">
+                             <div class="form-group">
+                                  <label for="member-modal-fellowship" style="display:flex; justify-content:space-between; align-items:center;">
+                                      <span>교제부서 소속</span>
+                                      <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddFellowship()">+ 추가</span>
+                                  </label>
+                                  <select id="member-modal-fellowship" class="form-control">
+                                      <!-- dynamic options -->
+                                  </select>
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-duty">직분</label>
+                                 <input type="text" id="member-modal-duty" class="form-control" placeholder="예: 서리집사, 봉사직분, 권사 등">
+                             </div>
+                         </div>
+                         <div class="form-row">
+                             <div class="form-group">
+                                  <label for="member-modal-group" style="display:flex; justify-content:space-between; align-items:center;">
+                                       <span>소속 그룹</span>
+                                       <span style="font-size:0.75rem; color:var(--primary-hover); cursor:pointer; font-weight:700;" onclick="quickAddGroup()">+ 추가</span>
+                                  </label>
+                                  <select id="member-modal-group" class="form-control" onchange="handleMemberModalGroupChange()">
+                                       <!-- dynamic options -->
+                                  </select>
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-address">주소</label>
+                                 <input type="text" id="member-modal-address" class="form-control" placeholder="거주지 주소">
+                             </div>
+                         </div>
+                         <div class="form-group">
+                             <label for="member-modal-family">가족 사항 (수기 메모 - 등록 성도간 연결은 우측 '가족 및 인적 링크 설정'을 사용)</label>
+                             <input type="text" id="member-modal-family" class="form-control" placeholder="예: 배우자 김영희, 자녀 1남1녀 (미출석)">
+                         </div>
+                         <div class="form-group">
+                             <label for="member-modal-notes">목회적 특이사항</label>
+                             <textarea id="member-modal-notes" class="form-control" placeholder="신앙적 특징, 관심사 등 핵심 메모" style="min-height: 80px;"></textarea>
+                         </div>
+                    </div>
+                    
+                    <!-- Right Column: Evangelist, History, Relations -->
+                    <div class="modal-right-column" id="modal-right-column">
+                         <!-- 🤖 Evangelist Custom Fields (Dynamic panel) -->
+                         <div id="evangelist-fields-panel" class="hidden" style="background:rgba(139,92,246,0.03); border:1px solid rgba(139,92,246,0.15); padding:1rem; border-radius:12px; display:flex; flex-direction:column; gap:0.75rem;">
+                             <label style="color: var(--primary-hover); font-weight: 700; font-size: 0.85rem;">🤖 전도인 세부 프로필 추가 설정</label>
+                             <div class="form-row">
+                                 <div class="form-group">
+                                     <label for="member-modal-eva-church">현재 교회</label>
+                                     <input type="text" id="member-modal-eva-church" class="form-control" placeholder="예: 인천교회">
+                                 </div>
+                                 <div class="form-group">
+                                     <label for="member-modal-eva-role">직책 (전도인)</label>
+                                     <select id="member-modal-eva-role" class="form-control">
+                                         <option value="">-- 직책 선택 --</option>
+                                         <option value="담임전도인">담임전도인</option>
+                                         <option value="부사역자">부사역자</option>
+                                     </select>
+                                 </div>
+                             </div>
+                             <div class="form-row">
+                                 <div class="form-group">
+                                     <label for="member-modal-eva-career">전도 경력</label>
+                                     <input type="text" id="member-modal-eva-career" class="form-control" placeholder="예: 5년">
+                                 </div>
+                                 <div class="form-group">
+                                     <label for="member-modal-eva-education">학력 사항</label>
+                                     <input type="text" id="member-modal-eva-education" class="form-control" placeholder="예: 대학원 졸">
+                                 </div>
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-eva-church-history">교회 이력 (수기)</label>
+                                 <input type="text" id="member-modal-eva-church-history" class="form-control" placeholder="예: 대구교회, 서울남부교회">
+                             </div>
+                             <div class="form-group">
+                                 <label for="member-modal-eva-social-career">사회 경력 (수기)</label>
+                                 <input type="text" id="member-modal-eva-social-career" class="form-control" placeholder="예: 회사 사무직 3년">
+                             </div>
+                         </div>
+
+                         <!-- ⏳ Personal Changes & History Log Editor -->
+                         <div id="member-modal-history-section" style="border-top: 1px solid var(--card-border); padding-top: 0.75rem; margin-top: 0.5rem;">
+                             <label style="color: var(--primary-hover); font-weight: 700; font-size: 0.85rem;">⏳ 인적 이력 및 변동사항 편집 관리</label>
+                             <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                                 <div style="display:flex; gap:0.5rem;">
+                                     <input type="date" id="member-modal-hist-date" class="form-control" style="flex:1;">
+                                     <select id="member-modal-hist-type" class="form-control" style="flex:1;">
+                                         <option value="구역">구역 변동</option>
+                                         <option value="교회">교회 변동</option>
+                                         <option value="직책">직책/직분 변동</option>
+                                         <option value="부서">부서 변동</option>
+                                         <option value="가족">가족 변동</option>
+                                         <option value="기타">기타 변동</option>
+                                     </select>
+                                     <input type="text" id="member-modal-hist-content" class="form-control" placeholder="예: 3구역 ➡️ 5구역" style="flex:2;">
+                                     <button type="button" class="btn btn-primary" onclick="addMemberHistoryLogInModal()">추가</button>
+                                 </div>
+                                 
+                                 <div id="member-modal-hist-list" style="display:flex; flex-direction:column; gap:0.35rem; margin-top:0.5rem; max-height:120px; overflow-y:auto; border:1px solid var(--card-border); padding:0.5rem; border-radius:6px; background:rgba(0,0,0,0.15);">
+                                     <!-- list of history logs -->
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- Relation Links System -->
+                         <div class="form-group" style="border-top: 1px solid var(--card-border); padding-top: 0.75rem; margin-top: 0.5rem;">
+                             <label style="color: var(--primary-hover); font-weight: 600; font-size: 0.85rem;">🔗 가족 및 인적 링크 설정 (등록된 다른 성도와 상호 연결)</label>
+                             <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.25rem;">
+                                 <div style="display:flex; gap:0.5rem;">
+                                     <select id="member-modal-rel-target" class="form-control" style="flex:1.5;">
+                                         <!-- Dynamic loading of members -->
+                                     </select>
+                                     <select id="member-modal-rel-type-select" class="form-control" style="flex:1;" onchange="handleRelationTypeSelectChange()">
+                                         <option value="부부">부부 (쌍방)</option>
+                                         <option value="형제/자매">형제/자매 (쌍방)</option>
+                                         <option value="부모">부모 (상대: 자녀)</option>
+                                         <option value="자녀">자녀 (상대: 부모)</option>
+                                         <option value="조부모">조부모 (상대: 손주)</option>
+                                         <option value="손주">손주 (상대: 조부모)</option>
+                                         <option value="인도자">인도자 (상대: 전도대상자)</option>
+                                         <option value="전도대상자">전도대상자 (상대: 인도자)</option>
+                                         <option value="회사 선임">회사 선임 (상대: 후임)</option>
+                                         <option value="회사 후임">회사 후임 (상대: 선임)</option>
+                                         <option value="회사동료">회사동료 (쌍방)</option>
+                                         <option value="학교 선배">학교 선배 (상대: 후배)</option>
+                                         <option value="학교 후배">학교 후배 (상대: 선배)</option>
+                                         <option value="친척">친척(삼촌/고모/이모 등) (상대: 조카)</option>
+                                         <option value="조카">조카 (상대: 친척)</option>
+                                         <option value="친구">친구 (쌍방)</option>
+                                         <option value="지인">지인 (쌍방)</option>
+                                         <option value="custom">직접 수기 입력...</option>
+                                     </select>
+                                     <button type="button" class="btn btn-primary" onclick="addMemberRelationInModal()">추가</button>
+                                 </div>
+                                 
+                                 <!-- Custom manual input settings (hidden by default) -->
+                                 <div id="member-modal-rel-custom-panel" class="hidden" style="display:flex; flex-direction:column; gap:0.5rem; background:rgba(255,255,255,0.02); border:1px dashed var(--card-border); padding:0.75rem; border-radius:8px;">
+                                     <div style="display:flex; justify-content:space-between; align-items:center;">
+                                         <span style="font-size:0.75rem; color:var(--text-secondary);">수기 연결 방식:</span>
+                                         <select id="member-modal-rel-custom-mode" class="form-control" style="width:auto; padding:0.2rem; font-size:0.75rem; height:28px;" onchange="handleCustomRelationModeChange()">
+                                             <option value="single">단방향 링크</option>
+                                             <option value="symmetric">대칭형 쌍방 링크</option>
+                                             <option value="asymmetric">비대칭형 쌍방 링크</option>
+                                         </select>
+                                     </div>
+                                     <div style="display:flex; gap:0.5rem;" id="member-modal-rel-custom-inputs">
+                                         <input type="text" id="member-modal-rel-custom-val1" class="form-control" placeholder="관계명 입력 (예: 이웃)" style="flex:1;">
+                                         <input type="text" id="member-modal-rel-custom-val2" class="form-control hidden" placeholder="상대방이 부르는 호칭 (예: 집주인)" style="flex:1;">
+                                     </div>
+                                 </div>
+                             </div>
+                             <div id="member-modal-rel-list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                                 <!-- Relation tags with delete button -->
+                             </div>
+                             <input type="hidden" id="member-modal-relations-data">
+                         </div>
+                    </div>
+                </div>            </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeMemberModal()">취소</button>
                 <button class="btn btn-primary" onclick="saveMemberData()">💾 정보 저장</button>
@@ -2391,13 +2398,9 @@
                             
                             <!-- 🤖 Evangelist Custom Fields View -->
                             <div id="detail-evangelist-fields" class="hidden" style="border-top:1px solid rgba(139,92,246,0.15); padding-top:0.5rem; margin-top:0.25rem; display:flex; flex-direction:column; gap:0.4rem;">
-                                <span style="color:var(--accent); font-weight:700; display:block; font-size:0.8rem; margin-bottom:0.25rem;">🤖 전도인 세부 정보</span>
+                                <span style="color:var(--accent); font-weight:700; display:block; font-size:0.8rem; margin-bottom:0.25rem;">🤖 전도인 기본 정보</span>
                                 <div><span style="color:var(--text-secondary);">현재 교회:</span> <span id="detail-eva-church" style="color:var(--text-primary); font-weight:500;">-</span></div>
                                 <div><span style="color:var(--text-secondary);">전도인 직책:</span> <span id="detail-eva-role" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                                <div><span style="color:var(--text-secondary);">전도 경력:</span> <span id="detail-eva-career" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                                <div><span style="color:var(--text-secondary);">학력 사항:</span> <span id="detail-eva-education" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                                <div><span style="color:var(--text-secondary);">교회 이력:</span> <span id="detail-eva-church-history" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                                <div><span style="color:var(--text-secondary);">사회 경력:</span> <span id="detail-eva-social-career" style="color:var(--text-primary); font-weight:500;">-</span></div>
                             </div>
                             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem; margin-top:0.25rem;">
                                 <span style="color:var(--primary-hover); font-weight:600; display:block; margin-bottom:0.25rem; font-size:0.8rem;">🔗 가족 및 관계 성도 링크</span>
@@ -2423,6 +2426,7 @@
                         <button id="btn-detail-tab-newlog" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('newlog')">✍️ 새 심방/상담 기록 작성</button>
                         <button id="btn-detail-tab-prayers" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('prayers')">🙏 기도부탁 명단</button>
                         <button id="btn-detail-tab-history" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('history')">⏳ 인적 변동 기록</button>
+                        <button id="btn-detail-tab-evacareer" class="btn hidden" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('evacareer')">💼 전도인 세부 이력</button>
                     </div>
 
                     <!-- Detail Tab Content 1: Past Timeline logs -->
@@ -2436,6 +2440,26 @@
                     <div id="detail-tab-history-panel" class="hidden" style="flex:1; overflow-y:auto; padding-right:0.5rem;">
                         <div class="timeline" id="detail-history-logs-timeline" style="margin-top: 0.5rem;">
                             <!-- dynamic logs of history changes -->
+                        </div>
+                    </div>
+
+                    <!-- Detail Tab Content 5: Evangelist detailed career records -->
+                    <div id="detail-tab-evacareer-panel" class="hidden" style="flex:1; overflow-y:auto; padding-right:0.5rem; display:flex; flex-direction:column; gap:1.25rem;">
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="font-size:0.9rem; color:var(--accent); margin-bottom: 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem;">📋 전도 경력 타임라인</h4>
+                            <div id="detail-eva-career-timeline">-</div>
+                        </div>
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="font-size:0.9rem; color:var(--accent); margin-bottom: 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem;">🎓 학력 사항</h4>
+                            <div id="detail-eva-education-timeline">-</div>
+                        </div>
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="font-size:0.9rem; color:var(--accent); margin-bottom: 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem;">⛪ 교회 이력</h4>
+                            <div id="detail-eva-church-history-timeline">-</div>
+                        </div>
+                        <div class="glass-card" style="padding:1.25rem;">
+                            <h4 style="font-size:0.9rem; color:var(--accent); margin-bottom: 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.25rem;">💼 사회 경력</h4>
+                            <div id="detail-eva-social-career-timeline">-</div>
                         </div>
                     </div>
 
@@ -3243,6 +3267,50 @@
         }
 
         // Render history timeline in detail modal
+        // Parser & Formatter for Evangelism Career & Histories
+        function formatCareerText(text) {
+            if (!text || !text.trim()) {
+                return '<span style="color:var(--text-secondary); font-size:0.8rem;">등록된 기록이 없습니다.</span>';
+            }
+
+            // Regex matcher for dates (YYYY-MM-DD or YYYY-MM) or date ranges (with ~)
+            const regex = /(?:\d{4}-\d{2}-\d{2}\s*~\s*\d{4}-\d{2}-\d{2}|\d{4}-\d{2}\s*~\s*\d{4}-\d{2}|\d{4}-\d{2}-\d{2}|\d{4}-\d{2})/g;
+            
+            const matches = [...text.matchAll(regex)];
+            if (matches.length === 0) {
+                // If there are no dates, split by slashes
+                return `<div style="color:white; font-size:0.85rem; line-height:1.5;">${text.split(/\s*\/\s*/).map(p => p.trim()).join('<br>')}</div>`;
+            }
+
+            let html = '<div style="display:flex; flex-direction:column; gap:0.5rem; width:100%;">';
+            
+            for (let i = 0; i < matches.length; i++) {
+                const dateStr = matches[i][0];
+                const startIndex = matches[i].index;
+                const endIndex = startIndex + dateStr.length;
+                
+                const nextIndex = (i + 1 < matches.length) ? matches[i+1].index : text.length;
+                let contentStr = text.substring(endIndex, nextIndex).trim();
+                
+                // Clean separators
+                contentStr = contentStr.replace(/^[|:\s/]+|[|:\s/]+$/g, '').trim();
+                
+                // Wrap sub-elements in badges
+                const parts = contentStr.split(/\s*\|\s*/).map(p => p.trim()).filter(p => p);
+                const badgesHtml = parts.map(p => `<span style="background:rgba(255,255,255,0.04); color:white; padding:0.15rem 0.4rem; border-radius:4px; border:1px solid rgba(255,255,255,0.06); font-size:0.78rem; display:inline-block; margin-right:0.25rem; white-space:nowrap;">${p}</span>`).join(' ');
+                
+                html += `
+                    <div style="display:flex; align-items:flex-start; gap:0.75rem; border-bottom:1px solid rgba(255,255,255,0.02); padding-bottom:0.4rem; line-height:1.4;">
+                        <span style="color:var(--primary-hover); font-weight:700; font-family:monospace; white-space:nowrap; font-size:0.8rem; padding-top:0.1rem; flex-shrink:0;">${dateStr}</span>
+                        <div style="display:flex; flex-wrap:wrap; gap:0.25rem; flex:1;">${badgesHtml || '-'}</div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
         function renderMemberHistoryTimeline() {
             const container = document.getElementById('detail-history-logs-timeline');
             if (!container) return;
@@ -4829,17 +4897,29 @@
             
             // Render Evangelist Specific Fields dynamically
             const evaPanel = document.getElementById('detail-evangelist-fields');
+            const btnEvaCareer = document.getElementById('btn-detail-tab-evacareer');
+            
             if (m.group === '전도인') {
                 const ed = m.evangelistDetails || {};
-                document.getElementById('detail-eva-church').textContent = ed.currentChurch || '기입없음';
-                document.getElementById('detail-eva-role').textContent = ed.role || '기입없음';
-                document.getElementById('detail-eva-career').textContent = ed.evangelismCareer || '기입없음';
-                document.getElementById('detail-eva-education').textContent = ed.education || '기입없음';
-                document.getElementById('detail-eva-church-history').textContent = ed.churchHistory || '기입없음';
-                document.getElementById('detail-eva-social-career').textContent = ed.socialCareer || '기입없음';
+                document.getElementById('detail-eva-church').innerHTML = ed.currentChurch ? `<span style="background:rgba(139,92,246,0.15); color:#c084fc; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; font-size:0.75rem;">${ed.currentChurch}</span>` : '기입없음';
+                document.getElementById('detail-eva-role').innerHTML = ed.role ? `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; font-size:0.75rem;">${ed.role}</span>` : '기입없음';
+                
+                // Populate detailed timeline tabs
+                document.getElementById('detail-eva-career-timeline').innerHTML = formatCareerText(ed.evangelismCareer);
+                document.getElementById('detail-eva-education-timeline').innerHTML = formatCareerText(ed.education);
+                document.getElementById('detail-eva-church-history-timeline').innerHTML = formatCareerText(ed.churchHistory);
+                document.getElementById('detail-eva-social-career-timeline').innerHTML = formatCareerText(ed.socialCareer);
+                
                 evaPanel.classList.remove('hidden');
+                if (btnEvaCareer) btnEvaCareer.classList.remove('hidden');
             } else {
                 evaPanel.classList.add('hidden');
+                if (btnEvaCareer) btnEvaCareer.classList.add('hidden');
+                // Switch away if active tab was evacareer
+                const activeBtn = document.querySelector('.detail-tabs button.btn[style*="border-bottom"]');
+                if (activeBtn && activeBtn.id === 'btn-detail-tab-evacareer') {
+                    switchDetailRightTab('timeline');
+                }
             }
 
             // Always render history timeline
@@ -4904,19 +4984,21 @@
             const btnNewlog = document.getElementById('btn-detail-tab-newlog');
             const btnPrayers = document.getElementById('btn-detail-tab-prayers');
             const btnHistory = document.getElementById('btn-detail-tab-history');
+            const btnEvaCareer = document.getElementById('btn-detail-tab-evacareer');
             
             const panelTimeline = document.getElementById('detail-tab-timeline-panel');
             const panelNewlog = document.getElementById('detail-tab-newlog-panel');
             const panelPrayers = document.getElementById('detail-tab-prayers-panel');
             const panelHistory = document.getElementById('detail-tab-history-panel');
+            const panelEvaCareer = document.getElementById('detail-tab-evacareer-panel');
 
-            [btnTimeline, btnNewlog, btnPrayers, btnHistory].forEach(b => {
+            [btnTimeline, btnNewlog, btnPrayers, btnHistory, btnEvaCareer].forEach(b => {
                 if (b) {
                     b.style.color = 'var(--text-secondary)';
                     b.style.borderBottom = 'none';
                 }
             });
-            [panelTimeline, panelNewlog, panelPrayers, panelHistory].forEach(p => {
+            [panelTimeline, panelNewlog, panelPrayers, panelHistory, panelEvaCareer].forEach(p => {
                 if (p) p.classList.add('hidden');
             });
 
@@ -4945,6 +5027,14 @@
                 if (panelHistory) {
                     panelHistory.classList.remove('hidden');
                     renderMemberHistoryTimeline();
+                }
+            } else if (tabName === 'evacareer') {
+                if (btnEvaCareer) {
+                    btnEvaCareer.style.color = 'white';
+                    btnEvaCareer.style.borderBottom = '3px solid var(--primary)';
+                }
+                if (panelEvaCareer) {
+                    panelEvaCareer.classList.remove('hidden');
                 }
             }
         }
