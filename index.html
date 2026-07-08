@@ -2155,9 +2155,15 @@
                              </div>
                              <div class="form-row">
                                  <div class="form-group">
-                                     <label for="member-modal-eva-career">전도 경력</label>
-                                     <input type="text" id="member-modal-eva-career" class="form-control" placeholder="예: 5년">
+                                     <label for="member-modal-eva-appointed">부임일</label>
+                                     <input type="date" id="member-modal-eva-appointed" class="form-control">
                                  </div>
+                                 <div class="form-group">
+                                     <label for="member-modal-eva-career">전도 경력</label>
+                                     <input type="text" id="member-modal-eva-career" class="form-control" placeholder="예: 연대표 혹은 년수 기입">
+                                 </div>
+                             </div>
+                             <div class="form-row">
                                  <div class="form-group">
                                      <label for="member-modal-eva-education">학력 사항</label>
                                      <input type="text" id="member-modal-eva-education" class="form-control" placeholder="예: 대학원 졸">
@@ -2403,6 +2409,7 @@
                                 <span style="color:var(--accent); font-weight:700; display:block; font-size:0.8rem; margin-bottom:0.25rem;">🤖 전도인 기본 정보</span>
                                 <div><span style="color:var(--text-secondary);">현재 교회:</span> <span id="detail-eva-church" style="color:var(--text-primary); font-weight:500;">-</span></div>
                                 <div><span style="color:var(--text-secondary);">전도인 직책:</span> <span id="detail-eva-role" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">부임일:</span> <span id="detail-eva-appointed" style="color:var(--text-primary); font-weight:500;">-</span></div>
                             </div>
                             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem; margin-top:0.25rem;">
                                 <span style="color:var(--primary-hover); font-weight:600; display:block; margin-bottom:0.25rem; font-size:0.8rem;">🔗 가족 및 관계 성도 링크</span>
@@ -4087,6 +4094,7 @@
             setInputValue('member-modal-eva-education', '');
             setInputValue('member-modal-eva-church-history', '');
             setInputValue('member-modal-eva-social-career', '');
+            setInputValue('member-modal-eva-appointed', '');
             handleMemberModalGroupChange();
 
             // Clear history log modal variables
@@ -4332,6 +4340,7 @@
                 evangelistDetails = {
                     currentChurch: document.getElementById('member-modal-eva-church').value.trim(),
                     role: document.getElementById('member-modal-eva-role').value,
+                    appointmentDate: document.getElementById('member-modal-eva-appointed').value,
                     evangelismCareer: document.getElementById('member-modal-eva-career').value.trim(),
                     education: document.getElementById('member-modal-eva-education').value.trim(),
                     churchHistory: document.getElementById('member-modal-eva-church-history').value.trim(),
@@ -4621,11 +4630,11 @@
 
             const evaHeaders = [
                 "이름", "성별", "출생년도", "구원일", "직분", "교회", "구역", "봉사부서", "교제부서", "소속그룹", "전화번호", "주소", "가족사항", "메모",
-                "현재교회", "전도인직책", "전도경력", "학력사항", "교회이력", "사회경력"
+                "현재교회", "전도인직책", "부임일", "전도경력", "학력사항", "교회이력", "사회경력"
             ];
             const evaData = [
                 evaHeaders,
-                ["이출재", "남", "1965", "1980-08-15", "전도사", "인천교회", "구역없음", "미지정", "은장회", "전도인", "010-9876-5432", "인천시 남동구", "배우자 한선희", "2026-06-01일자로 인천교회 시무 부임함", "인천교회", "부사역자", "2026-06-01 | 교회이동 | 인천 | 부사역자 2022-01-01 | 교회이동 | 포항 | 담임목사", "1980-03 ~ 1983-02 | 순천 고등학교 | 졸업", "1985-09-01 ~ 1990-08-31 | 광주 | 장", "1988-09-00 ~ 1991-07-00 | 광산레미콘 | 부장"]
+                ["이출재", "남", "1965", "1980-08-15", "전도사", "인천교회", "구역없음", "미지정", "은장회", "전도인", "010-9876-5432", "인천시 남동구", "배우자 한선희", "2026-06-01일자로 인천교회 시무 부임함", "인천교회", "부사역자", "2026-06-01", "2026-06-01 | 교회이동 | 인천 | 부사역자 2022-01-01 | 교회이동 | 포항 | 담임목사", "1980-03 ~ 1983-02 | 순천 고등학교 | 졸업", "1985-09-01 ~ 1990-08-31 | 광주 | 장", "1988-09-00 ~ 1991-07-00 | 광산레미콘 | 부장"]
             ];
             
             const wb = XLSX.utils.book_new();
@@ -4678,6 +4687,7 @@
                         "메모": "notes",
                         "현재교회": "evaCurrentChurch",
                         "전도인직책": "evaRole",
+                        "부임일": "evaAppointed",
                         "전도경력": "evaCareer",
                         "학력사항": "evaEducation",
                         "교회이력": "evaChurchHistory",
@@ -4716,6 +4726,7 @@
                         const evaDetails = {};
                         if (memberObj.evaCurrentChurch) { evaDetails.currentChurch = memberObj.evaCurrentChurch; delete memberObj.evaCurrentChurch; hasEvaData = true; }
                         if (memberObj.evaRole) { evaDetails.role = memberObj.evaRole; delete memberObj.evaRole; hasEvaData = true; }
+                        if (memberObj.evaAppointed) { evaDetails.appointmentDate = memberObj.evaAppointed; delete memberObj.evaAppointed; hasEvaData = true; }
                         if (memberObj.evaCareer) { evaDetails.evangelismCareer = memberObj.evaCareer; delete memberObj.evaCareer; hasEvaData = true; }
                         if (memberObj.evaEducation) { evaDetails.education = memberObj.evaEducation; delete memberObj.evaEducation; hasEvaData = true; }
                         if (memberObj.evaChurchHistory) { evaDetails.churchHistory = memberObj.evaChurchHistory; delete memberObj.evaChurchHistory; hasEvaData = true; }
@@ -4934,6 +4945,7 @@
                 const ed = m.evangelistDetails || {};
                 document.getElementById('detail-eva-church').innerHTML = ed.currentChurch ? `<span style="background:rgba(139,92,246,0.15); color:#c084fc; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; font-size:0.75rem;">${ed.currentChurch}</span>` : '기입없음';
                 document.getElementById('detail-eva-role').innerHTML = ed.role ? `<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; font-size:0.75rem;">${ed.role}</span>` : '기입없음';
+                document.getElementById('detail-eva-appointed').innerHTML = ed.appointmentDate ? `<span style="background:rgba(245,158,11,0.15); color:#fbbf24; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700; font-size:0.75rem;">${ed.appointmentDate}</span>` : '기입없음';
                 
                 // Populate detailed timeline tabs
                 document.getElementById('detail-eva-career-timeline').innerHTML = formatCareerText(ed.evangelismCareer);
@@ -7064,6 +7076,7 @@ ${m.notes || '등록된 메모가 없습니다.'}
             setInputValue('member-modal-eva-education', ed.education || '');
             setInputValue('member-modal-eva-church-history', ed.churchHistory || '');
             setInputValue('member-modal-eva-social-career', ed.socialCareer || '');
+            setInputValue('member-modal-eva-appointed', ed.appointmentDate || '');
             handleMemberModalGroupChange();
 
             // Load history logs list
