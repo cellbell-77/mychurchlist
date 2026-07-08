@@ -1566,6 +1566,15 @@
                         <select id="member-filter-group" class="form-control" style="width: auto; padding:0.4rem 0.75rem;" onchange="filterMembers(); syncFolderExplorerHighlight();">
                             <option value="">전체 소속그룹</option>
                         </select>
+                        <select id="member-sort-by" class="form-control" style="width: auto; padding:0.4rem 0.75rem; border-color:var(--primary); font-weight:600;" onchange="filterMembers()">
+                            <option value="name_asc">🔤 이름 가나다순</option>
+                            <option value="age_desc">👴 나이 많은순 (고령순)</option>
+                            <option value="age_asc">👶 나이 적은순 (연소순)</option>
+                            <option value="salvation_asc">🕊️ 구원일 오래된순</option>
+                            <option value="salvation_desc">🕊️ 구원일 최근순</option>
+                            <option value="appointed_asc">⛪ 부임일 오래된순</option>
+                            <option value="appointed_desc">⛪ 부임일 최근순</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1583,6 +1592,7 @@
                                 <th>소속그룹</th>
                                 <th>교회명</th>
                                 <th>구원일</th>
+                                <th>부임일</th>
                                 <th>인적 링크</th>
                                 <th>연락처</th>
                                 <th>최근 심방</th>
@@ -3987,11 +3997,51 @@
                 return matchSearch && matchParish && matchDept && matchFellowship && matchGroup;
             });
 
+            // Sort filtered list
+            const sortSelect = document.getElementById('member-sort-by');
+            const sortBy = sortSelect ? sortSelect.value : 'name_asc';
+            filtered.sort((a, b) => {
+                if (sortBy === 'name_asc') {
+                    return a.name.localeCompare(b.name, 'ko');
+                }
+                if (sortBy === 'age_desc') {
+                    const birthA = a.birth ? parseInt(a.birth) : 9999;
+                    const birthB = b.birth ? parseInt(b.birth) : 9999;
+                    return birthA - birthB;
+                }
+                if (sortBy === 'age_asc') {
+                    const birthA = a.birth ? parseInt(a.birth) : 0;
+                    const birthB = b.birth ? parseInt(b.birth) : 0;
+                    return birthB - birthA;
+                }
+                if (sortBy === 'salvation_asc') {
+                    const dateA = a.salvationDate || '9999-12-31';
+                    const dateB = b.salvationDate || '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                }
+                if (sortBy === 'salvation_desc') {
+                    const dateA = a.salvationDate || '0000-01-01';
+                    const dateB = b.salvationDate || '0000-01-01';
+                    return dateB.localeCompare(dateA);
+                }
+                if (sortBy === 'appointed_asc') {
+                    const dateA = (a.evangelistDetails && a.evangelistDetails.appointmentDate) ? a.evangelistDetails.appointmentDate : '9999-12-31';
+                    const dateB = (b.evangelistDetails && b.evangelistDetails.appointmentDate) ? b.evangelistDetails.appointmentDate : '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                }
+                if (sortBy === 'appointed_desc') {
+                    const dateA = (a.evangelistDetails && a.evangelistDetails.appointmentDate) ? a.evangelistDetails.appointmentDate : '0000-01-01';
+                    const dateB = (b.evangelistDetails && b.evangelistDetails.appointmentDate) ? b.evangelistDetails.appointmentDate : '0000-01-01';
+                    return dateB.localeCompare(dateA);
+                }
+                return 0;
+            });
+
             const paginationContainer = document.getElementById('member-load-more-container');
             if (paginationContainer) paginationContainer.innerHTML = '';
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
                 return;
             }
 
@@ -4050,6 +4100,7 @@
                     <td><span class="badge" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.25);">${m.group || '-'}</span></td>
                     <td>${m.church || '-'}</td>
                     <td>${m.salvationDate || '-'}</td>
+                    <td>${(m.evangelistDetails && m.evangelistDetails.appointmentDate) ? m.evangelistDetails.appointmentDate : '-'}</td>
                     <td><div style="display:flex; flex-wrap:wrap; gap:0.15rem; max-width:180px;">${relsHtml}</div></td>
                     <td>${m.phone || '-'}</td>
                     <td>${latestVisitDate}</td>
