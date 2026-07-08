@@ -1615,7 +1615,7 @@
             <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="glass-card" style="display:flex; flex-direction:column; gap:1rem;">
                     <!-- Parser Mode Toggle -->
-                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.5rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem; flex-wrap:wrap;">
                         <button id="btn-parser-tab-text" class="tab-btn active" onclick="switchParserTab('text')">📝 텍스트 붙여넣기</button>
                         <button id="btn-parser-tab-excel" class="tab-btn" onclick="switchParserTab('excel')">📥 엑셀(XLSX) 업로드</button>
                     </div>
@@ -1685,7 +1685,7 @@
 
             <div class="glass-card" style="display:flex; flex-direction:column; gap:1.25rem;">
                 <!-- Tab switchers inside schedule page -->
-                <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.5rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem; flex-wrap:wrap;">
                     <button id="btn-sched-tab-cal" class="tab-btn active" onclick="switchScheduleTab('calendar')">📅 월간 달력</button>
                     <button id="btn-sched-tab-list" class="tab-btn" onclick="switchScheduleTab('list')">📝 전체 일정 목록</button>
                 </div>
@@ -2430,7 +2430,7 @@
                 <div class="detail-right-content" style="display:flex; flex-direction:column; gap:1.25rem; height: 100%; overflow: hidden;">
                     
                     <!-- Inner Tab switcher inside detail modal -->
-                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.4rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem; flex-wrap:wrap;">
                         <button id="btn-detail-tab-timeline" class="tab-btn active" onclick="switchDetailRightTab('timeline')">📋 과거 섬김 기록</button>
                         <button id="btn-detail-tab-newlog" class="tab-btn" onclick="switchDetailRightTab('newlog')">✍️ 새 심방/상담 기록 작성</button>
                         <button id="btn-detail-tab-prayers" class="tab-btn" onclick="switchDetailRightTab('prayers')">🙏 기도부탁 명단</button>
@@ -4658,18 +4658,6 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    if (json.length === 0) {
-                        alert('엑셀 파일에 데이터가 비어 있습니다.');
-                        return;
-                    }
-                    
-                    const headers = json[0].map(h => String(h).trim());
-                    const rows = json.slice(1);
-                    
                     const fieldMapping = {
                         "이름": "name",
                         "성별": "gender",
@@ -4695,54 +4683,67 @@
                     };
 
                     parsedMembersBuffer = [];
-                    
-                    rows.forEach((row, rowIdx) => {
-                        if (row.length === 0) return;
+
+                    // Loop through ALL worksheets in the Excel file
+                    workbook.SheetNames.forEach((sheetName) => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        if (json.length === 0) return;
                         
-                        const memberObj = {
-                            id: "m_parsed_" + Date.now() + "_" + rowIdx,
-                            visitLogs: [],
-                            relations: [],
-                            prayerRequests: []
-                        };
+                        const headers = json[0].map(h => h ? String(h).trim() : '');
+                        const rows = json.slice(1);
                         
-                        let hasData = false;
-                        headers.forEach((header, colIdx) => {
-                            const field = fieldMapping[header];
-                            if (field) {
-                                let val = row[colIdx];
-                                if (val !== undefined && val !== null) {
-                                    val = String(val).trim();
-                                    if (val) {
-                                        memberObj[field] = val;
-                                        hasData = true;
+                        rows.forEach((row, rowIdx) => {
+                            if (row.length === 0) return;
+                            
+                            const memberObj = {
+                                id: "m_parsed_" + Date.now() + "_" + sheetName.replace(/\s+/g, '') + "_" + rowIdx,
+                                visitLogs: [],
+                                relations: [],
+                                prayerRequests: []
+                            };
+                            
+                            let hasData = false;
+                            headers.forEach((header, colIdx) => {
+                                const field = fieldMapping[header];
+                                if (field) {
+                                    let val = row[colIdx];
+                                    if (val !== undefined && val !== null) {
+                                        val = String(val).trim();
+                                        if (val) {
+                                            memberObj[field] = val;
+                                            hasData = true;
+                                        }
                                     }
+                                }
+                            });
+                            
+                            // Extract evangelistDetails if present
+                            let hasEvaData = false;
+                            const evaDetails = {};
+                            if (memberObj.evaCurrentChurch) { evaDetails.currentChurch = memberObj.evaCurrentChurch; delete memberObj.evaCurrentChurch; hasEvaData = true; }
+                            if (memberObj.evaRole) { evaDetails.role = memberObj.evaRole; delete memberObj.evaRole; hasEvaData = true; }
+                            if (memberObj.evaAppointed) { evaDetails.appointmentDate = memberObj.evaAppointed; delete memberObj.evaAppointed; hasEvaData = true; }
+                            if (memberObj.evaCareer) { evaDetails.evangelismCareer = memberObj.evaCareer; delete memberObj.evaCareer; hasEvaData = true; }
+                            if (memberObj.evaEducation) { evaDetails.education = memberObj.evaEducation; delete memberObj.evaEducation; hasEvaData = true; }
+                            if (memberObj.evaChurchHistory) { evaDetails.churchHistory = memberObj.evaChurchHistory; delete memberObj.evaChurchHistory; hasEvaData = true; }
+                            if (memberObj.evaSocialCareer) { evaDetails.socialCareer = memberObj.evaSocialCareer; delete memberObj.evaSocialCareer; hasEvaData = true; }
+                            
+                            if (hasEvaData || memberObj.group === '전도인') {
+                                memberObj.evangelistDetails = evaDetails;
+                            }
+
+                            if (hasData && memberObj.name) {
+                                if (memberObj.gender) {
+                                    if (memberObj.gender.includes('남')) memberObj.gender = '남';
+                                    else if (memberObj.gender.includes('여')) memberObj.gender = '여';
+                                }
+                                // Skip header row replica or empty/placeholder names
+                                if (memberObj.name !== "이름") {
+                                    parsedMembersBuffer.push(memberObj);
                                 }
                             }
                         });
-                        
-                        // Extract evangelistDetails if present
-                        let hasEvaData = false;
-                        const evaDetails = {};
-                        if (memberObj.evaCurrentChurch) { evaDetails.currentChurch = memberObj.evaCurrentChurch; delete memberObj.evaCurrentChurch; hasEvaData = true; }
-                        if (memberObj.evaRole) { evaDetails.role = memberObj.evaRole; delete memberObj.evaRole; hasEvaData = true; }
-                        if (memberObj.evaAppointed) { evaDetails.appointmentDate = memberObj.evaAppointed; delete memberObj.evaAppointed; hasEvaData = true; }
-                        if (memberObj.evaCareer) { evaDetails.evangelismCareer = memberObj.evaCareer; delete memberObj.evaCareer; hasEvaData = true; }
-                        if (memberObj.evaEducation) { evaDetails.education = memberObj.evaEducation; delete memberObj.evaEducation; hasEvaData = true; }
-                        if (memberObj.evaChurchHistory) { evaDetails.churchHistory = memberObj.evaChurchHistory; delete memberObj.evaChurchHistory; hasEvaData = true; }
-                        if (memberObj.evaSocialCareer) { evaDetails.socialCareer = memberObj.evaSocialCareer; delete memberObj.evaSocialCareer; hasEvaData = true; }
-                        
-                        if (hasEvaData || memberObj.group === '전도인') {
-                            memberObj.evangelistDetails = evaDetails;
-                        }
-
-                        if (hasData && memberObj.name) {
-                            if (memberObj.gender) {
-                                if (memberObj.gender.includes('남')) memberObj.gender = '남';
-                                else if (memberObj.gender.includes('여')) memberObj.gender = '여';
-                            }
-                            parsedMembersBuffer.push(memberObj);
-                        }
                     });
 
                     if (parsedMembersBuffer.length === 0) {
