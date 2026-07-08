@@ -2290,6 +2290,17 @@
                             <div><span style="color:var(--text-secondary);">소속 그룹:</span> <span id="detail-info-group" style="color:var(--text-primary); font-weight:500;">-</span></div>
                             <div><span style="color:var(--text-secondary);">주소:</span> <span id="detail-info-address" style="color:var(--text-primary); font-weight:500;">서울시 강남구</span></div>
                             <div><span style="color:var(--text-secondary);">가족사항 (수기):</span> <span id="detail-info-family" style="color:var(--text-primary); font-weight:500;">배우자, 자녀 1남</span></div>
+                            
+                            <!-- 🤖 Evangelist Custom Fields View -->
+                            <div id="detail-evangelist-fields" class="hidden" style="border-top:1px solid rgba(139,92,246,0.15); padding-top:0.5rem; margin-top:0.25rem; display:flex; flex-direction:column; gap:0.4rem;">
+                                <span style="color:var(--accent); font-weight:700; display:block; font-size:0.8rem; margin-bottom:0.25rem;">🤖 전도인 세부 정보</span>
+                                <div><span style="color:var(--text-secondary);">현재 교회:</span> <span id="detail-eva-church" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">전도인 직책:</span> <span id="detail-eva-role" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">전도 경력:</span> <span id="detail-eva-career" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">학력 사항:</span> <span id="detail-eva-education" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">교회 이력:</span> <span id="detail-eva-church-history" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                                <div><span style="color:var(--text-secondary);">사회 경력:</span> <span id="detail-eva-social-career" style="color:var(--text-primary); font-weight:500;">-</span></div>
+                            </div>
                             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem; margin-top:0.25rem;">
                                 <span style="color:var(--primary-hover); font-weight:600; display:block; margin-bottom:0.25rem; font-size:0.8rem;">🔗 가족 및 관계 성도 링크</span>
                                 <div id="detail-info-relations" style="display:flex; flex-wrap:wrap; gap:0.25rem;">
@@ -2313,12 +2324,20 @@
                         <button id="btn-detail-tab-timeline" class="btn" style="border:none; background:transparent; font-weight:700; color:white; border-bottom: 3px solid var(--primary); border-radius:0;" onclick="switchDetailRightTab('timeline')">📋 과거 섬김 기록</button>
                         <button id="btn-detail-tab-newlog" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('newlog')">✍️ 새 심방/상담 기록 작성</button>
                         <button id="btn-detail-tab-prayers" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('prayers')">🙏 기도부탁 명단</button>
+                        <button id="btn-detail-tab-history" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('history')">⏳ 인적 변동 기록</button>
                     </div>
 
                     <!-- Detail Tab Content 1: Past Timeline logs -->
                     <div id="detail-tab-timeline-panel" style="flex:1; overflow-y:auto; padding-right:0.5rem;">
                         <div class="timeline" id="detail-visit-logs-timeline" style="margin-top: 0.5rem;">
                             <!-- dynamic logs -->
+                        </div>
+                    </div>
+
+                    <!-- Detail Tab Content 4: Personal History changes timeline -->
+                    <div id="detail-tab-history-panel" class="hidden" style="flex:1; overflow-y:auto; padding-right:0.5rem;">
+                        <div class="timeline" id="detail-history-logs-timeline" style="margin-top: 0.5rem;">
+                            <!-- dynamic logs of history changes -->
                         </div>
                     </div>
 
@@ -2952,6 +2971,205 @@
                         }
                     }
                 }
+            });
+        }
+
+
+        // ==========================================
+        // ⏳ EVANGELISTS & HISTORY TRACKING SYSTEMS
+        // ==========================================
+        let modalHistoryLogs = [];
+
+        function renderHistoryInModal() {
+            const listContainer = document.getElementById('member-modal-hist-list');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '';
+            if (modalHistoryLogs.length === 0) {
+                listContainer.innerHTML = '<span style="color:var(--text-secondary); font-size:0.8rem;">등록된 변동 이력이 없습니다.</span>';
+                return;
+            }
+
+            modalHistoryLogs.forEach((h, idx) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.background = 'rgba(255,255,255,0.02)';
+                item.style.padding = '0.35rem 0.5rem';
+                item.style.borderRadius = '4px';
+                item.style.border = '1px solid rgba(255,255,255,0.05)';
+                item.style.fontSize = '0.8rem';
+                item.style.color = 'white';
+
+                item.innerHTML = `
+                    <div style="display:flex; gap:0.5rem; flex:1; align-items:center;">
+                        <input type="date" value="${h.date}" style="background:transparent; border:none; color:var(--primary-hover); font-size:0.75rem; width:110px;" onchange="updateHistoryDateInModal(${idx}, this.value)">
+                        <span style="color:var(--warning); font-size:0.75rem;">[${h.type}]</span>
+                        <input type="text" value="${h.content}" style="background:transparent; border:none; color:white; font-size:0.75rem; flex:1; min-width:0;" onchange="updateHistoryContentInModal(${idx}, this.value)">
+                    </div>
+                    <button type="button" class="btn" style="padding:0.1rem 0.35rem; font-size:0.7rem; border-color:#ef4444; color:#ef4444; background:transparent;" onclick="removeHistoryLogInModal(${idx})">❌</button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function addMemberHistoryLogInModal() {
+            const dateVal = document.getElementById('member-modal-hist-date').value;
+            const typeVal = document.getElementById('member-modal-hist-type').value;
+            const contentVal = document.getElementById('member-modal-hist-content').value.trim();
+
+            if (!dateVal) {
+                alert('변동 날짜를 선택해 주세요.');
+                return;
+            }
+            if (!contentVal) {
+                alert('변동 내용을 입력해 주세요. (예: 3구역 ➡️ 5구역)');
+                return;
+            }
+
+            modalHistoryLogs.push({
+                id: "h_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+                date: dateVal,
+                type: typeVal,
+                content: contentVal
+            });
+
+            // Sort logs descending by date
+            modalHistoryLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            document.getElementById('member-modal-hist-content').value = '';
+            renderHistoryInModal();
+        }
+
+        function removeHistoryLogInModal(idx) {
+            modalHistoryLogs.splice(idx, 1);
+            renderHistoryInModal();
+        }
+
+        function updateHistoryDateInModal(idx, newVal) {
+            if (modalHistoryLogs[idx]) {
+                modalHistoryLogs[idx].date = newVal;
+                modalHistoryLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderHistoryInModal();
+            }
+        }
+
+        function updateHistoryContentInModal(idx, newVal) {
+            if (modalHistoryLogs[idx]) {
+                modalHistoryLogs[idx].content = newVal;
+            }
+        }
+
+        function handleMemberModalGroupChange() {
+            const groupSelect = document.getElementById('member-modal-group');
+            const panel = document.getElementById('evangelist-fields-panel');
+            if (groupSelect && groupSelect.value === '전도인') {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // Auto change auditing helper
+        function autoDetectAndLogChanges(oldM, newM) {
+            const history = oldM.historyLogs || [];
+            const todayStr = new Date().toISOString().split('T')[0];
+            const changeDetected = [];
+
+            // 1. Parish (구역)
+            if (oldM.parish !== newM.parish) {
+                changeDetected.push({
+                    id: "h_" + Date.now() + "_p",
+                    date: todayStr,
+                    type: "구역",
+                    content: `${oldM.parish || '구역미지정'} ➡️ ${newM.parish || '구역미지정'}`
+                });
+            }
+
+            // 2. Department (부서)
+            if (oldM.department !== newM.department) {
+                changeDetected.push({
+                    id: "h_" + Date.now() + "_d",
+                    date: todayStr,
+                    type: "부서",
+                    content: `${oldM.department || '부서미지정'} ➡️ ${newM.department || '부서미지정'}`
+                });
+            }
+
+            // 3. Evangelist current church or basic church
+            const oldChurch = oldM.group === '전도인' ? (oldM.evangelistDetails?.currentChurch || '') : (oldM.church || '');
+            const newChurch = newM.group === '전도인' ? (newM.evangelistDetails?.currentChurch || '') : (newM.church || '');
+            if (oldChurch !== newChurch) {
+                changeDetected.push({
+                    id: "h_" + Date.now() + "_c",
+                    date: todayStr,
+                    type: "교회",
+                    content: `${oldChurch || '기입없음'} ➡️ ${newChurch || '기입없음'}`
+                });
+            }
+
+            // 4. Role/Duty (직책)
+            const oldRole = oldM.group === '전도인' ? (oldM.evangelistDetails?.role || '') : (oldM.duty || '');
+            const newRole = newM.group === '전도인' ? (newM.evangelistDetails?.role || '') : (newM.duty || '');
+            if (oldRole !== newRole) {
+                changeDetected.push({
+                    id: "h_" + Date.now() + "_r",
+                    date: todayStr,
+                    type: "직책",
+                    content: `${oldRole || '기입없음'} ➡️ ${newRole || '기입없음'}`
+                });
+            }
+
+            // 5. Family details change
+            if (oldM.family !== newM.family) {
+                changeDetected.push({
+                    id: "h_" + Date.now() + "_f",
+                    date: todayStr,
+                    type: "가족",
+                    content: `가족 변경: ${newM.family || '기입없음'}`
+                });
+            }
+
+            // Merge detected changes into history
+            changeDetected.forEach(ch => {
+                // Ensure no duplicate content logged on same day
+                if (!history.some(h => h.type === ch.type && h.content === ch.content)) {
+                    history.push(ch);
+                }
+            });
+
+            // Sort logs descending
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+            return history;
+        }
+
+        // Render history timeline in detail modal
+        function renderMemberHistoryTimeline() {
+            const container = document.getElementById('detail-history-logs-timeline');
+            if (!container) return;
+
+            container.innerHTML = '';
+            const m = members.find(item => item.id === currentDetailMemberId);
+            if (!m) return;
+
+            const logs = m.historyLogs || [];
+            if (logs.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-secondary); font-size:0.85rem; padding: 1rem 0; display:block; text-align:center;">기록된 인적 변동 이력이 없습니다.</span>';
+                return;
+            }
+
+            logs.forEach(l => {
+                const node = document.createElement('div');
+                node.className = 'timeline-item';
+                node.style.cssText = 'position:relative; padding-left:1.5rem; margin-bottom:1.25rem; border-left: 2px solid var(--primary);';
+                
+                node.innerHTML = `
+                    <div style="position:absolute; left:-6px; top:4px; width:10px; height:10px; border-radius:50%; background:var(--accent); border:2px solid var(--bg-card);"></div>
+                    <div style="font-size:0.75rem; color:var(--primary-hover); font-weight:700;">${l.date} <span style="color:var(--warning); margin-left:0.25rem;">[${l.type}]</span></div>
+                    <div style="font-size:0.85rem; color:white; font-weight:500; margin-top:0.15rem;">${l.content}</div>
+                `;
+                container.appendChild(node);
             });
         }
 
@@ -3665,6 +3883,21 @@
             document.getElementById('member-modal-rel-custom-val1').value = '';
             document.getElementById('member-modal-rel-custom-val2').value = '';
             
+            // Clear evangelist details
+            document.getElementById('member-modal-eva-church').value = '';
+            document.getElementById('member-modal-eva-role').value = '';
+            document.getElementById('member-modal-eva-career').value = '';
+            document.getElementById('member-modal-eva-education').value = '';
+            document.getElementById('member-modal-eva-church-history').value = '';
+            document.getElementById('member-modal-eva-social-career').value = '';
+            handleMemberModalGroupChange();
+
+            // Clear history log modal variables
+            modalHistoryLogs = [];
+            document.getElementById('member-modal-hist-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('member-modal-hist-content').value = '';
+            renderHistoryInModal();
+            
             updateRelationTargetDropdown('');
             renderRelationsInModal();
 
@@ -3707,6 +3940,22 @@
             document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
             document.getElementById('member-modal-rel-custom-val1').value = '';
             document.getElementById('member-modal-rel-custom-val2').value = '';
+            
+            // Load evangelist details if exists
+            const ed = m.evangelistDetails || {};
+            document.getElementById('member-modal-eva-church').value = ed.currentChurch || '';
+            document.getElementById('member-modal-eva-role').value = ed.role || '';
+            document.getElementById('member-modal-eva-career').value = ed.evangelismCareer || '';
+            document.getElementById('member-modal-eva-education').value = ed.education || '';
+            document.getElementById('member-modal-eva-church-history').value = ed.churchHistory || '';
+            document.getElementById('member-modal-eva-social-career').value = ed.socialCareer || '';
+            handleMemberModalGroupChange();
+
+            // Load history logs list
+            modalHistoryLogs = m.historyLogs ? [...m.historyLogs] : [];
+            document.getElementById('member-modal-hist-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('member-modal-hist-content').value = '';
+            renderHistoryInModal();
 
             updateRelationTargetDropdown(m.id);
             renderRelationsInModal();
@@ -3833,30 +4082,62 @@
                 }
             });
 
+            // Gather evangelist specific details
+            let evangelistDetails = null;
+            if (group === '전도인') {
+                evangelistDetails = {
+                    currentChurch: document.getElementById('member-modal-eva-church').value.trim(),
+                    role: document.getElementById('member-modal-eva-role').value,
+                    evangelismCareer: document.getElementById('member-modal-eva-career').value.trim(),
+                    education: document.getElementById('member-modal-eva-education').value.trim(),
+                    churchHistory: document.getElementById('member-modal-eva-church-history').value.trim(),
+                    socialCareer: document.getElementById('member-modal-eva-social-career').value.trim()
+                };
+            }
+
             let oldRels = [];
             let savedId = mId;
+
+            // Make temp comparison target for change auditing
+            const newMemberValues = {
+                parish: parish,
+                department: dept,
+                church: church,
+                duty: duty,
+                family: family,
+                group: group,
+                evangelistDetails: evangelistDetails,
+                historyLogs: modalHistoryLogs
+            };
 
             if (mId) {
                 // Edit mode
                 const mIdx = members.findIndex(item => item.id === mId);
                 if (mIdx !== -1) {
-                    oldRels = [...(members[mIdx].relations || [])];
-                    members[mIdx].name = name;
-                    members[mIdx].gender = gender;
-                    members[mIdx].birth = birth;
-                    members[mIdx].salvationDate = salvationDate;
-                    members[mIdx].duty = duty;
-                    members[mIdx].church = church;
-                    members[mIdx].parish = parish;
-                    members[mIdx].department = dept;
-                    members[mIdx].fellowship = fellowship;
-                    members[mIdx].group = group;
-                    members[mIdx].phone = phone;
-                    members[mIdx].address = address;
-                    members[mIdx].family = family;
-                    members[mIdx].notes = notes;
-                    members[mIdx].photo = photo;
-                    members[mIdx].relations = relations;
+                    const oldM = members[mIdx];
+                    oldRels = [...(oldM.relations || [])];
+                    
+                    // Trigger auto audit logging comparison
+                    const updatedHistory = autoDetectAndLogChanges(oldM, newMemberValues);
+                    
+                    oldM.name = name;
+                    oldM.gender = gender;
+                    oldM.birth = birth;
+                    oldM.salvationDate = salvationDate;
+                    oldM.duty = duty;
+                    oldM.church = church;
+                    oldM.parish = parish;
+                    oldM.department = dept;
+                    oldM.fellowship = fellowship;
+                    oldM.group = group;
+                    oldM.phone = phone;
+                    oldM.address = address;
+                    oldM.family = family;
+                    oldM.notes = notes;
+                    oldM.photo = photo;
+                    oldM.relations = relations;
+                    oldM.evangelistDetails = evangelistDetails;
+                    oldM.historyLogs = updatedHistory;
                 }
             } else {
                 // Create mode
@@ -3879,6 +4160,8 @@
                     notes: notes,
                     photo: photo,
                     relations: relations,
+                    evangelistDetails: evangelistDetails,
+                    historyLogs: modalHistoryLogs,
                     visitLogs: []
                 };
                 members.push(newMember);
@@ -4266,10 +4549,59 @@
                 members.push(m);
             });
 
-            // 4. Run full bidirectional mapping sync on all new members
-            members.forEach(m => {
-                if (m.relations && m.relations.length > 0) {
-                    syncRelationsOnSave(m.id, [], m.relations, m.name, m.duty);
+            // 4. Run smart UPSERT (match by Name + Phone or Name)
+            parsedMembersBuffer.forEach(newM => {
+                // Try to find matching existing member
+                const matchIdx = members.findIndex(existingM => {
+                    const nameMatch = existingM.name === newM.name;
+                    if (newM.phone && existingM.phone) {
+                        return nameMatch && (existingM.phone === newM.phone);
+                    }
+                    return nameMatch;
+                });
+
+                if (matchIdx !== -1) {
+                    // Smart update! Match found.
+                    const existingM = members[matchIdx];
+                    
+                    // Trigger auto audit logging comparison
+                    const updatedHistory = autoDetectAndLogChanges(existingM, newM);
+
+                    // Update basic info fields
+                    existingM.gender = newM.gender || existingM.gender;
+                    existingM.birth = newM.birth || existingM.birth;
+                    existingM.salvationDate = newM.salvationDate || existingM.salvationDate;
+                    existingM.duty = newM.duty || existingM.duty;
+                    existingM.church = newM.church || existingM.church;
+                    existingM.parish = newM.parish || existingM.parish;
+                    existingM.department = newM.department || existingM.department;
+                    existingM.fellowship = newM.fellowship || existingM.fellowship;
+                    existingM.group = newM.group || existingM.group;
+                    existingM.address = newM.address || existingM.address;
+                    existingM.family = newM.family || existingM.family;
+                    existingM.notes = newM.notes || existingM.notes;
+                    existingM.evangelistDetails = newM.evangelistDetails || existingM.evangelistDetails;
+                    existingM.historyLogs = updatedHistory;
+
+                    // Sync relations
+                    if (newM.relations && newM.relations.length > 0) {
+                        const mergedRels = [...(existingM.relations || [])];
+                        newM.relations.forEach(nr => {
+                            if (!mergedRels.some(mr => mr.targetId === nr.targetId)) {
+                                mergedRels.push(nr);
+                            }
+                        });
+                        syncRelationsOnSave(existingM.id, existingM.relations || [], mergedRels, existingM.name, existingM.duty);
+                        existingM.relations = mergedRels;
+                    }
+                } else {
+                    // New member register
+                    members.push(newM);
+                    
+                    // Sync relations for the new member
+                    if (newM.relations && newM.relations.length > 0) {
+                        syncRelationsOnSave(newM.id, [], newM.relations, newM.name, newM.duty);
+                    }
                 }
             });
 
@@ -4320,6 +4652,24 @@
             document.getElementById('detail-info-address').textContent = m.address || '등록된 주소 없음';
             document.getElementById('detail-info-family').textContent = m.family || '등록된 가족관계 없음';
             document.getElementById('detail-info-notes').textContent = m.notes || '성도 특이사항 및 목회 메모가 등록되지 않았습니다.';
+            
+            // Render Evangelist Specific Fields dynamically
+            const evaPanel = document.getElementById('detail-evangelist-fields');
+            if (m.group === '전도인') {
+                const ed = m.evangelistDetails || {};
+                document.getElementById('detail-eva-church').textContent = ed.currentChurch || '기입없음';
+                document.getElementById('detail-eva-role').textContent = ed.role || '기입없음';
+                document.getElementById('detail-eva-career').textContent = ed.evangelismCareer || '기입없음';
+                document.getElementById('detail-eva-education').textContent = ed.education || '기입없음';
+                document.getElementById('detail-eva-church-history').textContent = ed.churchHistory || '기입없음';
+                document.getElementById('detail-eva-social-career').textContent = ed.socialCareer || '기입없음';
+                evaPanel.classList.remove('hidden');
+            } else {
+                evaPanel.classList.add('hidden');
+            }
+
+            // Always render history timeline
+            renderMemberHistoryTimeline();
 
             // Render relations clickable badges
             const relContainer = document.getElementById('detail-info-relations');
@@ -4379,17 +4729,20 @@
             const btnTimeline = document.getElementById('btn-detail-tab-timeline');
             const btnNewlog = document.getElementById('btn-detail-tab-newlog');
             const btnPrayers = document.getElementById('btn-detail-tab-prayers');
+            const btnHistory = document.getElementById('btn-detail-tab-history');
+            
             const panelTimeline = document.getElementById('detail-tab-timeline-panel');
             const panelNewlog = document.getElementById('detail-tab-newlog-panel');
             const panelPrayers = document.getElementById('detail-tab-prayers-panel');
+            const panelHistory = document.getElementById('detail-tab-history-panel');
 
-            [btnTimeline, btnNewlog, btnPrayers].forEach(b => {
+            [btnTimeline, btnNewlog, btnPrayers, btnHistory].forEach(b => {
                 if (b) {
                     b.style.color = 'var(--text-secondary)';
                     b.style.borderBottom = 'none';
                 }
             });
-            [panelTimeline, panelNewlog, panelPrayers].forEach(p => {
+            [panelTimeline, panelNewlog, panelPrayers, panelHistory].forEach(p => {
                 if (p) p.classList.add('hidden');
             });
 
@@ -4409,6 +4762,15 @@
                 if (panelPrayers) {
                     panelPrayers.classList.remove('hidden');
                     renderMemberPrayersList();
+                }
+            } else if (tabName === 'history') {
+                if (btnHistory) {
+                    btnHistory.style.color = 'white';
+                    btnHistory.style.borderBottom = '3px solid var(--primary)';
+                }
+                if (panelHistory) {
+                    panelHistory.classList.remove('hidden');
+                    renderMemberHistoryTimeline();
                 }
             }
         }
@@ -6436,6 +6798,22 @@ ${m.notes || '등록된 메모가 없습니다.'}
             document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
             document.getElementById('member-modal-rel-custom-val1').value = '';
             document.getElementById('member-modal-rel-custom-val2').value = '';
+            
+            // Load evangelist details if exists
+            const ed = m.evangelistDetails || {};
+            document.getElementById('member-modal-eva-church').value = ed.currentChurch || '';
+            document.getElementById('member-modal-eva-role').value = ed.role || '';
+            document.getElementById('member-modal-eva-career').value = ed.evangelismCareer || '';
+            document.getElementById('member-modal-eva-education').value = ed.education || '';
+            document.getElementById('member-modal-eva-church-history').value = ed.churchHistory || '';
+            document.getElementById('member-modal-eva-social-career').value = ed.socialCareer || '';
+            handleMemberModalGroupChange();
+
+            // Load history logs list
+            modalHistoryLogs = m.historyLogs ? [...m.historyLogs] : [];
+            document.getElementById('member-modal-hist-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('member-modal-hist-content').value = '';
+            renderHistoryInModal();
 
             updateRelationTargetDropdown(m.id);
             renderRelationsInModal();
