@@ -3947,12 +3947,13 @@
             filterMembers();
         }
 
-        let memberRenderLimit = 50;
+        let currentPage = 1;
+        const itemsPerPage = 50;
 
-        function filterMembers(keepLimit = false) {
+        function filterMembers(keepPage = false) {
             renderFolderExplorer();
-            if (!keepLimit) {
-                memberRenderLimit = 50;
+            if (!keepPage) {
+                currentPage = 1;
             }
 
             const searchQuery = document.getElementById('member-search-input').value.trim().toLowerCase();
@@ -3978,16 +3979,21 @@
                 return matchSearch && matchParish && matchDept && matchFellowship && matchGroup;
             });
 
-            const loadMoreContainer = document.getElementById('member-load-more-container');
-            if (loadMoreContainer) loadMoreContainer.innerHTML = '';
+            const paginationContainer = document.getElementById('member-load-more-container');
+            if (paginationContainer) paginationContainer.innerHTML = '';
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
                 return;
             }
 
-            // Slice to render limit
-            const pageItems = filtered.slice(0, memberRenderLimit);
+            // Calculate pagination values
+            const totalPages = Math.ceil(filtered.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const pageItems = filtered.slice(startIndex, startIndex + itemsPerPage);
 
             pageItems.forEach(m => {
                 // Get latest visitation log date
@@ -4045,19 +4051,40 @@
                 tbody.appendChild(tr);
             });
 
-            // If there are more items, render "Load More" button
-            if (filtered.length > memberRenderLimit && loadMoreContainer) {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-primary';
-                btn.style.cssText = 'width:100%; max-width:320px; font-weight:700; margin:1rem 0; box-shadow: 0 4px 12px rgba(139,92,246,0.15);';
-                btn.textContent = `성도 명단 더 보기 (${memberRenderLimit} / ${filtered.length}명)`;
-                btn.onclick = () => loadMoreMembers();
-                loadMoreContainer.appendChild(btn);
+            // Render numeric pagination bar if more than 1 page exists
+            if (totalPages > 1 && paginationContainer) {
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                let html = '<div style="display:flex; gap:0.25rem; align-items:center;">';
+                
+                // First / Prev buttons
+                html += `<button class="btn" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled style="opacity:0.4; pointer-events:none;"' : ''} style="padding:0.3rem 0.6rem; font-size:0.8rem;">맨앞</button>`;
+                html += `<button class="btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled style="opacity:0.4; pointer-events:none;"' : ''} style="padding:0.3rem 0.6rem; font-size:0.8rem;">이전</button>`;
+                
+                // Numbers
+                for (let p = startPage; p <= endPage; p++) {
+                    const isActive = (p === currentPage);
+                    html += `<button class="btn" onclick="goToPage(${p})" style="padding:0.3rem 0.75rem; font-size:0.8rem; font-weight:700; ${isActive ? 'background:var(--primary); color:white; border-color:var(--primary);' : 'background:transparent; color:var(--text-secondary); border-color:var(--card-border);'}">${p}</button>`;
+                }
+
+                // Next / Last buttons
+                html += `<button class="btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled style="opacity:0.4; pointer-events:none;"' : ''} style="padding:0.3rem 0.6rem; font-size:0.8rem;">다음</button>`;
+                html += `<button class="btn" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled style="opacity:0.4; pointer-events:none;"' : ''} style="padding:0.3rem 0.6rem; font-size:0.8rem;">맨뒤</button>`;
+                
+                html += `<span style="font-size:0.75rem; color:var(--text-secondary); margin-left:0.75rem;">(페이지 ${currentPage} / ${totalPages}, 총 ${filtered.length}명)</span>`;
+                html += '</div>';
+                
+                paginationContainer.innerHTML = html;
             }
         }
 
-        function loadMoreMembers() {
-            memberRenderLimit += 100;
+        function goToPage(page) {
+            currentPage = page;
             filterMembers(true);
         }
 
@@ -4827,7 +4854,11 @@
 
             saveBtn.disabled = false;
 
-            parsedMembersBuffer.forEach((m, idx) => {
+            // Render max 50 items for preview to avoid browser lag/freeze
+            const displayLimit = 50;
+            const visibleItems = parsedMembersBuffer.slice(0, displayLimit);
+
+            visibleItems.forEach((m, idx) => {
                 const div = document.createElement('div');
                 div.style.cssText = "background:rgba(255,255,255,0.02); border:1px solid var(--card-border); padding:0.6rem 0.8rem; border-radius:10px; display:flex; flex-direction:column; gap:0.4rem; position:relative;";
                 div.innerHTML = `
@@ -4847,6 +4878,13 @@
                 `;
                 previewContainer.appendChild(div);
             });
+
+            if (parsedMembersBuffer.length > displayLimit) {
+                const note = document.createElement('div');
+                note.style.cssText = "text-align:center; padding:0.5rem; font-size:0.8rem; color:var(--warning); font-weight:600;";
+                note.textContent = `... 외에 ${parsedMembersBuffer.length - displayLimit}명의 데이터가 더 있습니다 (총 ${parsedMembersBuffer.length}명).`;
+                previewContainer.appendChild(note);
+            }
         }
 
         function removeParsedBufferItem(idx) {
