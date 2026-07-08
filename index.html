@@ -1522,7 +1522,10 @@
                     <h1 class="page-title">👥 성도 명단 관리</h1>
                     <p class="page-desc">등록된 성도 정보를 조회하고 상세 상담기록을 작성합니다.</p>
                 </div>
-                <button class="btn btn-primary" onclick="openAddMemberModal()">+ 개별 성도 수기 등록</button>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-accent" style="border-color:#ef4444; color:#ef4444; background:transparent; font-weight:700;" onclick="deleteSelectedMembers()">🗑️ 선택 삭제</button>
+                    <button class="btn btn-primary" onclick="openAddMemberModal()">+ 개별 성도 수기 등록</button>
+                </div>
             </header>
 
             <!-- Upper 1/2: Group Folders Explorer (Compact horizontal view) -->
@@ -1582,7 +1585,8 @@
                     <table style="position: relative; width: 100%; border-collapse: collapse;">
                         <thead style="position: sticky; top: 0; background: var(--table-head-bg); z-index: 2;">
                             <tr>
-                                <th style="text-align:center; width:50px;">수정</th>
+                                <th style="text-align:center; width:40px;"><input type="checkbox" id="check-all-members" onclick="toggleAllMemberCheckboxes(this)"></th>
+                                <th style="text-align:center; width:80px;">관리</th>
                                 <th>이름</th>
                                 <th>직분</th>
                                 <th>출생년 (나이)</th>
@@ -3966,7 +3970,7 @@
         }
 
         let currentPage = 1;
-        const itemsPerPage = 50;
+        const itemsPerPage = 15;
 
         function filterMembers(keepPage = false) {
             renderFolderExplorer();
@@ -4041,7 +4045,7 @@
             if (paginationContainer) paginationContainer.innerHTML = '';
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
                 return;
             }
 
@@ -4083,8 +4087,12 @@
                 };
 
                 tr.innerHTML = `
+                    <td style="text-align:center;" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="member-row-checkbox" value="${m.id}">
+                    </td>
                     <td style="text-align:center;">
-                        <button class="btn" style="padding:0.2rem 0.4rem; font-size:0.75rem; border-color:rgba(139,92,246,0.15);" onclick="openEditMemberModal('${m.id}')">✏️</button>
+                        <button class="btn" style="padding:0.2rem 0.4rem; font-size:0.75rem; border-color:rgba(139,92,246,0.15); margin-right:0.15rem;" onclick="openEditMemberModal('${m.id}')">✏️</button>
+                        <button class="btn" style="padding:0.2rem 0.4rem; font-size:0.75rem; border-color:rgba(239,68,68,0.15); color:#ef4444;" onclick="deleteMemberDirectly('${m.id}')">🗑️</button>
                     </td>
                     <td style="font-weight:700; color:white;">
                         <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -7197,6 +7205,44 @@ ${m.notes || '등록된 메모가 없습니다.'}
                     renderMembersList();
                     alert('모든 성도 데이터가 초기화되었습니다.');
                 }
+            }
+        }
+
+        function deleteMemberDirectly(mId) {
+            const m = members.find(item => item.id === mId);
+            if (!m) return;
+            if (confirm(`정말 [${m.name}] 성도를 삭제하시겠습니까?`)) {
+                members = members.filter(item => item.id !== mId);
+                safeStorage.setItem('ssm_members', JSON.stringify(members));
+                filterMembers(true);
+                alert(`[${m.name}] 성도가 삭제되었습니다.`);
+            }
+        }
+
+        function toggleAllMemberCheckboxes(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.member-row-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+        }
+
+        function deleteSelectedMembers() {
+            const checkedCbs = document.querySelectorAll('.member-row-checkbox:checked');
+            if (checkedCbs.length === 0) {
+                alert('삭제할 성도를 선택해 주세요.');
+                return;
+            }
+            if (confirm(`정말 선택한 ${checkedCbs.length}명의 성도를 일괄 삭제하시겠습니까?`)) {
+                const idsToDelete = Array.from(checkedCbs).map(cb => cb.value);
+                members = members.filter(item => !idsToDelete.includes(item.id));
+                safeStorage.setItem('ssm_members', JSON.stringify(members));
+                
+                // Reset master checkbox
+                const master = document.getElementById('check-all-members');
+                if (master) master.checked = false;
+                
+                filterMembers(true);
+                alert('선택한 성도들이 일괄 삭제되었습니다.');
             }
         }
 
