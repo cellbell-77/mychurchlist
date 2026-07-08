@@ -2824,6 +2824,137 @@
         }
 
         // Settings actions for security
+
+        // Bidirectional Inverse Relations mapping
+        const RELATION_INVERSES = {
+            '부부': '부부',
+            '형제/자매': '형제/자매',
+            '부모': '자녀',
+            '자녀': '부모',
+            '조부모': '손주',
+            '손주': '조부모',
+            '인도자': '전도대상자',
+            '전도대상자': '인도자',
+            '회사 선임': '회사 후임',
+            '회사 후임': '회사 선임',
+            '회사동료': '회사동료',
+            '학교 선배': '학교 후배',
+            '학교 후배': '학교 선배',
+            '친척': '조카',
+            '조카': '친척',
+            '친구': '친구',
+            '지인': '지인'
+        };
+
+        function getInverseRelationType(relType, relationObj) {
+            if (RELATION_INVERSES[relType]) {
+                return RELATION_INVERSES[relType];
+            }
+            if (relationObj && relationObj.customMode === 'symmetric') {
+                return relType;
+            }
+            if (relationObj && relationObj.customMode === 'asymmetric') {
+                return relationObj.customInverseType || relType;
+            }
+            return null; // single-sided or fallback
+        }
+
+        // Automatic natural language scanner for family text field
+        function autoParseRelationsFromFamilyText(member, allMembersList) {
+            const familyText = member.family || "";
+            if (!familyText.trim()) return [];
+
+            const discovered = [];
+            const processedNames = new Set(); // Prevent duplicates
+
+            // RegEx scanners
+            const spouseRegex = /(?:배우자|부부|남편|아내|처|부인)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+            const parentRegex = /(?:부모|아버지|어머니|부|모)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+            const childRegex = /(?:자녀|아들|딸)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+            const siblingRegex = /(?:형제|자매|남매|형|누나|오빠|동생)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+            const guideRegex = /(?:인도자|인도)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+            const targetRegex = /(?:전도대상자|전도대상)[\s:]*([가-힣a-zA-Z0-9]+)/g;
+
+            function findTargetId(name) {
+                const match = allMembersList.find(m => m.name === name);
+                return match ? match.id : null;
+            }
+
+            function addParsedRelation(targetName, type) {
+                if (processedNames.has(targetName)) return;
+                const targetId = findTargetId(targetName);
+                if (targetId && targetId !== member.id) {
+                    const targetM = allMembersList.find(m => m.id === targetId);
+                    discovered.push({
+                        targetId: targetId,
+                        targetName: targetM.name,
+                        targetDuty: targetM.duty,
+                        type: type,
+                        customMode: null,
+                        customInverseType: null
+                    });
+                    processedNames.add(targetName);
+                }
+            }
+
+            let match;
+            // Parse spouse
+            while ((match = spouseRegex.exec(familyText)) !== null) addParsedRelation(match[1], '부부');
+            // Parse parent
+            while ((match = parentRegex.exec(familyText)) !== null) addParsedRelation(match[1], '자녀'); // target is my parent, my relation to them is '자녀'
+            // Parse child
+            while ((match = childRegex.exec(familyText)) !== null) addParsedRelation(match[1], '부모'); // target is my child, my relation to them is '부모'
+            // Parse siblings
+            while ((match = siblingRegex.exec(familyText)) !== null) addParsedRelation(match[1], '형제/자매');
+            // Parse guide
+            while ((match = guideRegex.exec(familyText)) !== null) addParsedRelation(match[1], '전도대상자'); // target is my guide, my relation to them is '전도대상자'
+            // Parse target
+            while ((match = targetRegex.exec(familyText)) !== null) addParsedRelation(match[1], '인도자');
+
+            return discovered;
+        }
+
+        // Database relation synchronization on save
+        function syncRelationsOnSave(memberId, oldRels, newRels, memberName, memberDuty) {
+            // Find deleted relations
+            const deletedRels = oldRels.filter(oldR => !newRels.some(newR => newR.targetId === oldR.targetId));
+            deletedRels.forEach(r => {
+                const targetIdx = members.findIndex(m => m.id === r.targetId);
+                if (targetIdx !== -1) {
+                    members[targetIdx].relations = (members[targetIdx].relations || []).filter(item => item.targetId !== memberId);
+                }
+            });
+
+            // Find added or updated relations
+            newRels.forEach(r => {
+                const targetIdx = members.findIndex(m => m.id === r.targetId);
+                if (targetIdx !== -1) {
+                    const targetM = members[targetIdx];
+                    const inverseType = getInverseRelationType(r.type, r);
+                    
+                    if (inverseType) {
+                        targetM.relations = targetM.relations || [];
+                        const existingRelIdx = targetM.relations.findIndex(item => item.targetId === memberId);
+
+                        const backLink = {
+                            targetId: memberId,
+                            targetName: memberName,
+                            targetDuty: memberDuty,
+                            type: inverseType,
+                            customMode: r.customMode,
+                            customInverseType: r.customMode === 'asymmetric' ? r.type : null
+                        };
+
+                        if (existingRelIdx !== -1) {
+                            targetM.relations[existingRelIdx] = backLink; // Update existing
+                        } else {
+                            targetM.relations.push(backLink); // Add new
+                        }
+                    }
+                }
+            });
+        }
+
         function initLockSettingsView() {
             const lockEnabled = safeStorage.getItem('ssm_lock_enabled') === 'true';
             const checkbox = document.getElementById('setting-lock-enabled');
@@ -3529,7 +3660,10 @@
 
             modalRelations = [];
             document.getElementById('member-modal-relations-data').value = '[]';
-            document.getElementById('member-modal-rel-type').value = '';
+            document.getElementById('member-modal-rel-type-select').value = '부부';
+            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
+            document.getElementById('member-modal-rel-custom-val1').value = '';
+            document.getElementById('member-modal-rel-custom-val2').value = '';
             
             updateRelationTargetDropdown('');
             renderRelationsInModal();
@@ -3569,7 +3703,10 @@
 
             modalRelations = m.relations || [];
             document.getElementById('member-modal-relations-data').value = JSON.stringify(modalRelations);
-            document.getElementById('member-modal-rel-type').value = '';
+            document.getElementById('member-modal-rel-type-select').value = '부부';
+            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
+            document.getElementById('member-modal-rel-custom-val1').value = '';
+            document.getElementById('member-modal-rel-custom-val2').value = '';
 
             updateRelationTargetDropdown(m.id);
             renderRelationsInModal();
@@ -3624,7 +3761,10 @@
             });
 
             document.getElementById('member-modal-relations-data').value = JSON.stringify(modalRelations);
-            document.getElementById('member-modal-rel-type').value = '';
+            document.getElementById('member-modal-rel-type-select').value = '부부';
+            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
+            document.getElementById('member-modal-rel-custom-val1').value = '';
+            document.getElementById('member-modal-rel-custom-val2').value = '';
             document.getElementById('member-modal-rel-target').value = '';
 
             renderRelationsInModal();
@@ -3680,12 +3820,27 @@
             const family = document.getElementById('member-modal-family').value.trim();
             const notes = document.getElementById('member-modal-notes').value.trim();
             const photo = document.getElementById('member-modal-photo-data').value;
-            const relations = JSON.parse(document.getElementById('member-modal-relations-data').value || '[]');
+            let relations = JSON.parse(document.getElementById('member-modal-relations-data').value || '[]');
+
+            // Temporary member object to run the natural language parser scanner on the family text
+            const tempM = { id: mId || "m_temp", name: name, duty: duty, family: family };
+            const parsedRels = autoParseRelationsFromFamilyText(tempM, members);
+            
+            // Merge parsed relations into relations list if they aren't already added
+            parsedRels.forEach(pr => {
+                if (!relations.some(r => r.targetId === pr.targetId)) {
+                    relations.push(pr);
+                }
+            });
+
+            let oldRels = [];
+            let savedId = mId;
 
             if (mId) {
                 // Edit mode
                 const mIdx = members.findIndex(item => item.id === mId);
                 if (mIdx !== -1) {
+                    oldRels = [...(members[mIdx].relations || [])];
                     members[mIdx].name = name;
                     members[mIdx].gender = gender;
                     members[mIdx].birth = birth;
@@ -3705,8 +3860,9 @@
                 }
             } else {
                 // Create mode
+                savedId = "m_" + Date.now();
                 const newMember = {
-                    id: "m_" + Date.now(),
+                    id: savedId,
                     name: name,
                     gender: gender,
                     birth: birth,
@@ -3727,6 +3883,9 @@
                 };
                 members.push(newMember);
             }
+
+            // Trigger bidirectional sync
+            syncRelationsOnSave(savedId, oldRels, relations, name, duty);
 
             safeStorage.setItem('ssm_members', JSON.stringify(members));
             closeMemberModal();
@@ -4083,12 +4242,35 @@
         function saveParsedMembers() {
             if (parsedMembersBuffer.length === 0) return;
 
+            // 1. Assign all unique IDs first so they can reference each other
             parsedMembersBuffer.forEach(m => {
-                // Ensure id
                 m.id = "m_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
                 m.visitLogs = [];
+                m.relations = m.relations || [];
                 m.notes = m.notes || '명단 수집기를 통해 일괄 등록된 성도입니다.';
+            });
+
+            // 2. Scan family text for relations across BOTH database and newly uploaded batch
+            const combinedList = [...members, ...parsedMembersBuffer];
+            parsedMembersBuffer.forEach(m => {
+                const parsedRels = autoParseRelationsFromFamilyText(m, combinedList);
+                parsedRels.forEach(pr => {
+                    if (!m.relations.some(r => r.targetId === pr.targetId)) {
+                        m.relations.push(pr);
+                    }
+                });
+            });
+
+            // 3. Register members and run sync mapping
+            parsedMembersBuffer.forEach(m => {
                 members.push(m);
+            });
+
+            // 4. Run full bidirectional mapping sync on all new members
+            members.forEach(m => {
+                if (m.relations && m.relations.length > 0) {
+                    syncRelationsOnSave(m.id, [], m.relations, m.name, m.duty);
+                }
             });
 
             safeStorage.setItem('ssm_members', JSON.stringify(members));
@@ -6250,7 +6432,10 @@ ${m.notes || '등록된 메모가 없습니다.'}
 
             modalRelations = m.relations || [];
             document.getElementById('member-modal-relations-data').value = JSON.stringify(modalRelations);
-            document.getElementById('member-modal-rel-type').value = '';
+            document.getElementById('member-modal-rel-type-select').value = '부부';
+            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
+            document.getElementById('member-modal-rel-custom-val1').value = '';
+            document.getElementById('member-modal-rel-custom-val2').value = '';
 
             updateRelationTargetDropdown(m.id);
             renderRelationsInModal();
