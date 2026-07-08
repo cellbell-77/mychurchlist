@@ -1598,6 +1598,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="member-load-more-container" style="display:flex; justify-content:center; padding:0.5rem 0; flex-shrink:0;"></div>
             </div>
         </section>
 
@@ -3946,8 +3947,14 @@
             filterMembers();
         }
 
-        function filterMembers() {
+        let memberRenderLimit = 50;
+
+        function filterMembers(keepLimit = false) {
             renderFolderExplorer();
+            if (!keepLimit) {
+                memberRenderLimit = 50;
+            }
+
             const searchQuery = document.getElementById('member-search-input').value.trim().toLowerCase();
             const parishVal = document.getElementById('member-filter-parish').value;
             const deptVal = document.getElementById('member-filter-dept').value;
@@ -3971,12 +3978,18 @@
                 return matchSearch && matchParish && matchDept && matchFellowship && matchGroup;
             });
 
+            const loadMoreContainer = document.getElementById('member-load-more-container');
+            if (loadMoreContainer) loadMoreContainer.innerHTML = '';
+
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
                 return;
             }
 
-            filtered.forEach(m => {
+            // Slice to render limit
+            const pageItems = filtered.slice(0, memberRenderLimit);
+
+            pageItems.forEach(m => {
                 // Get latest visitation log date
                 let latestVisitDate = '-';
                 if (m.visitLogs && m.visitLogs.length > 0) {
@@ -4031,6 +4044,21 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // If there are more items, render "Load More" button
+            if (filtered.length > memberRenderLimit && loadMoreContainer) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary';
+                btn.style.cssText = 'width:100%; max-width:320px; font-weight:700; margin:1rem 0; box-shadow: 0 4px 12px rgba(139,92,246,0.15);';
+                btn.textContent = `성도 명단 더 보기 (${memberRenderLimit} / ${filtered.length}명)`;
+                btn.onclick = () => loadMoreMembers();
+                loadMoreContainer.appendChild(btn);
+            }
+        }
+
+        function loadMoreMembers() {
+            memberRenderLimit += 100;
+            filterMembers(true);
         }
 
         // ==========================================
@@ -4711,6 +4739,25 @@
                                     if (val !== undefined && val !== null) {
                                         val = String(val).trim();
                                         if (val) {
+                                            if (field === 'birth') {
+                                                // 1. Try 4-digit year match (e.g. 1941-05-07, 1980년, etc.)
+                                                const yearMatch = val.match(/\b(19\d{2}|20\d{2})\b/);
+                                                if (yearMatch) {
+                                                    val = yearMatch[1];
+                                                } else {
+                                                    // 2. Try 2-digit year match at start (e.g. 41-05-07, 410507, 15/08/20)
+                                                    const yyMatch = val.match(/^(\d{2})[-./\s]*\d{2}[-./\s]*\d{2}$/) || val.match(/^(\d{2})\d{4}$/);
+                                                    if (yyMatch) {
+                                                        const yy = parseInt(yyMatch[1]);
+                                                        const currentYearYY = new Date().getFullYear() % 100;
+                                                        if (yy > currentYearYY) {
+                                                            val = String(1900 + yy);
+                                                        } else {
+                                                            val = String(2000 + yy);
+                                                        }
+                                                    }
+                                                }
+                                            }
                                             memberObj[field] = val;
                                             hasData = true;
                                         }
