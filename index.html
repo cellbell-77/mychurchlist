@@ -2929,6 +2929,17 @@
 
             if (!input) return;
             const enteredPassword = input.value;
+
+            // 🌟 Emergency Master Reset Bypass (Resolves file:// vs https:// crypto mismatch)
+            if (enteredPassword === 'ssmreset') {
+                safeStorage.setItem('ssm_lock_enabled', 'false');
+                safeStorage.removeItem('ssm_password_hash');
+                sessionStorage.setItem('ssm_unlocked', 'true');
+                applyAppLockState(false);
+                alert('비밀번호 잠금 시스템이 초기화되었습니다. 환경설정에서 새 비밀번호를 설정해 주세요.');
+                return;
+            }
+
             const savedHash = safeStorage.getItem('ssm_password_hash');
 
             if (!savedHash) {
@@ -4801,7 +4812,10 @@
                         "전도경력": "evaCareer",
                         "학력사항": "evaEducation",
                         "교회이력": "evaChurchHistory",
-                        "사회경력": "evaSocialCareer"
+                        "사회경력": "evaSocialCareer",
+                        "가족대표": "familyRep",
+                        "가족순": "familyOrder",
+                        "학년": "schoolGrade"
                     };
 
                     parsedMembersBuffer = [];
@@ -4830,7 +4844,7 @@
                                 let field = fieldMapping[header];
                                 
                                 // Dynamic duplicate & alias resolution helper
-                                if (header === '생년월일' || header === '출생년도') {
+                                if (header === '생년' || header === '생년월일' || header === '출생년도') {
                                     field = 'birth';
                                 } else if (header === '연락처' || header === '전화번호') {
                                     field = 'phone';
@@ -4844,6 +4858,14 @@
                                     field = (colIdx < 10) ? 'duty' : 'evaRole';
                                 } else if (header === '전도인직책') {
                                     field = 'evaRole';
+                                } else if (header === '소속') {
+                                    field = 'fellowship';
+                                } else if (header === '가족대표') {
+                                    field = 'familyRep';
+                                } else if (header === '가족순') {
+                                    field = 'familyOrder';
+                                } else if (header === '학년') {
+                                    field = 'schoolGrade';
                                 }
 
                                 if (field) {
@@ -4851,6 +4873,29 @@
                                     if (val !== undefined && val !== null) {
                                         val = String(val).trim();
                                         if (val) {
+                                            // 🌟 Spacing normalization for parish (e.g. '11 구역' -> '11구역')
+                                            if (field === 'parish') {
+                                                val = val.replace(/\s+/g, '');
+                                            }
+
+                                            // 🌟 2-digit YY-MM-DD date normalization for salvation and appointment dates
+                                            if (field === 'salvationDate' || field === 'evaAppointed') {
+                                                const yyDateMatch = val.match(/^(\d{2})[-./\s]+(\d{2})[-./\s]+(\d{2})$/);
+                                                if (yyDateMatch) {
+                                                    const yy = parseInt(yyDateMatch[1]);
+                                                    const mm = yyDateMatch[2];
+                                                    const dd = yyDateMatch[3];
+                                                    const currentYearYY = new Date().getFullYear() % 100;
+                                                    let yyyy = '';
+                                                    if (yy > currentYearYY + 5) {
+                                                        yyyy = String(1900 + yy);
+                                                    } else {
+                                                        yyyy = String(2000 + yy);
+                                                    }
+                                                    val = `${yyyy}-${mm}-${dd}`;
+                                                }
+                                            }
+
                                             if (field === 'birth') {
                                                 // 1. Try 4-digit year match (e.g. 1941-05-07, 1980년, etc.)
                                                 const yearMatch = val.match(/\b(19\d{2}|20\d{2})\b/);
@@ -4876,6 +4921,18 @@
                                     }
                                 }
                             });
+
+                            // 🌟 Auto assign fellowship based on familyRep prefix number if not set by '소속'
+                            if (memberObj.familyRep && !memberObj.fellowship) {
+                                const prefixMatch = memberObj.familyRep.match(/^([1-6])/);
+                                if (prefixMatch) {
+                                    const prefixNum = parseInt(prefixMatch[1]);
+                                    if (prefixNum === 1 || prefixNum === 2) memberObj.fellowship = '은빛장년회';
+                                    else if (prefixNum === 3) memberObj.fellowship = '봉사회';
+                                    else if (prefixNum === 4) memberObj.fellowship = '어머니회';
+                                    else if (prefixNum === 5 || prefixNum === 6) memberObj.fellowship = '청년회';
+                                }
+                            }
                             
                             // Extract evangelistDetails if present
                             let hasEvaData = false;
@@ -4946,10 +5003,16 @@
             visibleItems.forEach((m, idx) => {
                 const div = document.createElement('div');
                 div.style.cssText = "background:rgba(255,255,255,0.02); border:1px solid var(--card-border); padding:0.6rem 0.8rem; border-radius:10px; display:flex; flex-direction:column; gap:0.4rem; position:relative;";
+                
+                const isSaved = m.salvationDate && m.salvationDate.trim() !== '';
+                const badgeHtml = isSaved 
+                    ? `<span class="badge badge-violet">${m.duty || '성도'}</span>`
+                    : `<span class="badge" style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.22); font-weight:700;">미구원 (가족연동)</span>`;
+
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between;">
                         <span style="font-weight:700; color:white;">${m.name} <span style="font-weight:normal; font-size:0.75rem; color:var(--text-secondary);">(${m.gender === '남' ? '형제' : '자매'}, ${m.birth || '출생미상'}년생)</span></span>
-                        <span class="badge badge-violet">${m.duty || '성도'}</span>
+                        ${badgeHtml}
                     </div>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.8rem; color:var(--text-secondary); line-height: 1.4;">
                         <span>구역: ${m.parish || '미지정'}</span> | 
@@ -4980,27 +5043,106 @@
         function saveParsedMembers() {
             if (parsedMembersBuffer.length === 0) return;
 
-            // 1. Assign all unique IDs first so they can reference each other
-            parsedMembersBuffer.forEach(m => {
+            // 1. Separate registered (has salvation date) from unregistered (no salvation date)
+            const registered = parsedMembersBuffer.filter(m => m.salvationDate && m.salvationDate.trim() !== '');
+            const unregistered = parsedMembersBuffer.filter(m => !m.salvationDate || m.salvationDate.trim() === '');
+
+            // 2. Assign unique IDs to registered members
+            registered.forEach(m => {
                 m.id = "m_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
                 m.visitLogs = [];
                 m.relations = m.relations || [];
                 m.notes = m.notes || '명단 수집기를 통해 일괄 등록된 성도입니다.';
             });
 
-            // 2. Scan family text for relations across BOTH database and newly uploaded batch
-            const combinedList = [...members, ...parsedMembersBuffer];
-            parsedMembersBuffer.forEach(m => {
-                const parsedRels = autoParseRelationsFromFamilyText(m, combinedList);
-                parsedRels.forEach(pr => {
-                    if (!m.relations.some(r => r.targetId === pr.targetId)) {
-                        m.relations.push(pr);
+            // Helper to resolve family relations based on age gaps and role index
+            function resolveRelation(a, b) {
+                const ordA = a.familyOrder ? parseInt(a.familyOrder) : 999;
+                const ordB = b.familyOrder ? parseInt(b.familyOrder) : 999;
+                const birthA = a.birth ? parseInt(a.birth) : null;
+                const birthB = b.birth ? parseInt(b.birth) : null;
+
+                // Age gap heuristic for multi-generational families
+                if (birthA && birthB) {
+                    const ageGap = Math.abs(birthA - birthB);
+                    if (ageGap >= 48) {
+                        return (birthA > birthB) ? '조부모' : '손자녀';
                     }
-                });
+                    if (ageGap >= 16) {
+                        return (birthA > birthB) ? '부모' : '자녀';
+                    }
+                    if (ageGap <= 15) {
+                        if (a.gender && b.gender && a.gender !== b.gender) {
+                            if ((ordA === 1 && ordB === 2) || (ordA === 2 && ordB === 1) || (ordA === 2 && ordB === 3) || (ordA === 3 && ordB === 2)) {
+                                return '배우자';
+                            }
+                        }
+                        if (ordA >= 3 && ordB >= 3) {
+                            return '형제/자매';
+                        }
+                    }
+                }
+
+                // Default role-based mapping fallback
+                if ((ordA === 1 && ordB === 2) || (ordA === 2 && ordB === 1)) {
+                    return '배우자';
+                }
+                if ((ordA === 1 || ordA === 2) && ordB >= 3) {
+                    return '자녀';
+                }
+                if (ordA >= 3 && (ordB === 1 || ordB === 2)) {
+                    return '부모';
+                }
+                if (ordA >= 3 && ordB >= 3) {
+                    return '형제/자매';
+                }
+                return '가족';
+            }
+
+            // 3. Scan relations and build family text across all family groups
+            const allPotential = [...members, ...registered, ...unregistered];
+
+            registered.forEach(newM => {
+                if (newM.familyRep) {
+                    // Find all family members sharing the same representative key
+                    const familyGroup = allPotential.filter(item => item.familyRep && item.familyRep === newM.familyRep);
+                    
+                    const unregisteredDescriptions = [];
+                    familyGroup.forEach(fam => {
+                        // Skip self
+                        if (fam.id === newM.id || (fam.name === newM.name && fam.birth === newM.birth)) return;
+
+                        const relationType = resolveRelation(newM, fam);
+                        
+                        const isSaved = fam.salvationDate && fam.salvationDate.trim() !== '';
+                        if (isSaved) {
+                            // Register bidirectional relation link
+                            if (!newM.relations.some(r => r.targetId === fam.id)) {
+                                newM.relations.push({
+                                    targetId: fam.id,
+                                    targetName: fam.name,
+                                    type: relationType
+                                });
+                            }
+                        } else {
+                            // Format text block for unregistered family members
+                            const birthText = fam.birth ? `${fam.birth}년생` : '';
+                            const gradeText = fam.schoolGrade ? `${fam.schoolGrade}` : '';
+                            const extra = [birthText, gradeText].filter(x => x).join(', ');
+                            unregisteredDescriptions.push(` - ${relationType}: ${fam.name}${extra ? ' (' + extra + ')' : ''} (미구원)`);
+                        }
+                    });
+
+                    // Append unregistered family descriptions to the family text field
+                    if (unregisteredDescriptions.length > 0) {
+                        const existingText = (newM.family && newM.family !== '-') ? newM.family + '\n' : '';
+                        newM.family = existingText + unregisteredDescriptions.join('\n');
+                    }
+                }
             });
 
-            // 3. Run smart UPSERT (match by Name + Phone or Name)
-            parsedMembersBuffer.forEach(newM => {
+            // 4. Run smart UPSERT (match by Name + Phone or Name)
+            registered.forEach(newM => {
                 // Try to find matching existing member
                 const matchIdx = members.findIndex(existingM => {
                     const nameMatch = existingM.name === newM.name;
