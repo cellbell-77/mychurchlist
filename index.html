@@ -4878,21 +4878,31 @@
                                                 val = val.replace(/\s+/g, '');
                                             }
 
-                                            // 🌟 2-digit YY-MM-DD date normalization for salvation and appointment dates
+                                            // 🌟 2-digit YY-MM-DD date normalization or Excel serial number date conversion
                                             if (field === 'salvationDate' || field === 'evaAppointed') {
-                                                const yyDateMatch = val.match(/^(\d{2})[-./\s]+(\d{2})[-./\s]+(\d{2})$/);
-                                                if (yyDateMatch) {
-                                                    const yy = parseInt(yyDateMatch[1]);
-                                                    const mm = yyDateMatch[2];
-                                                    const dd = yyDateMatch[3];
-                                                    const currentYearYY = new Date().getFullYear() % 100;
-                                                    let yyyy = '';
-                                                    if (yy > currentYearYY + 5) {
-                                                        yyyy = String(1900 + yy);
-                                                    } else {
-                                                        yyyy = String(2000 + yy);
-                                                    }
+                                                if (/^\d{5}$/.test(val)) {
+                                                    // Handle Excel serial date numbers (e.g. 43883 -> 2020-02-22)
+                                                    const num = Number(val);
+                                                    const dateObj = new Date((num - 25569) * 86400 * 1000);
+                                                    const yyyy = dateObj.getFullYear();
+                                                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                                    const dd = String(dateObj.getDate()).padStart(2, '0');
                                                     val = `${yyyy}-${mm}-${dd}`;
+                                                } else {
+                                                    const yyDateMatch = val.match(/^(\d{2})[-./\s]+(\d{2})[-./\s]+(\d{2})$/);
+                                                    if (yyDateMatch) {
+                                                        const yy = parseInt(yyDateMatch[1]);
+                                                        const mm = yyDateMatch[2];
+                                                        const dd = yyDateMatch[3];
+                                                        const currentYearYY = new Date().getFullYear() % 100;
+                                                        let yyyy = '';
+                                                        if (yy > currentYearYY + 5) {
+                                                            yyyy = String(1900 + yy);
+                                                        } else {
+                                                            yyyy = String(2000 + yy);
+                                                        }
+                                                        val = `${yyyy}-${mm}-${dd}`;
+                                                    }
                                                 }
                                             }
 
