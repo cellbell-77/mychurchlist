@@ -1615,9 +1615,9 @@
             <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="glass-card" style="display:flex; flex-direction:column; gap:1rem;">
                     <!-- Parser Mode Toggle -->
-                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem;">
-                        <button id="btn-parser-tab-text" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--tab-active-color); border-bottom: 3px solid var(--primary); border-radius:0; padding:0.5rem 0;" onclick="switchParserTab('text')">📝 텍스트 붙여넣기</button>
-                        <button id="btn-parser-tab-excel" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0; padding:0.5rem 0;" onclick="switchParserTab('excel')">📥 엑셀(XLSX) 업로드</button>
+                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.5rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                        <button id="btn-parser-tab-text" class="tab-btn active" onclick="switchParserTab('text')">📝 텍스트 붙여넣기</button>
+                        <button id="btn-parser-tab-excel" class="tab-btn" onclick="switchParserTab('excel')">📥 엑셀(XLSX) 업로드</button>
                     </div>
 
                     <!-- Panel 1: Text Parser -->
@@ -1685,9 +1685,9 @@
 
             <div class="glass-card" style="display:flex; flex-direction:column; gap:1.25rem;">
                 <!-- Tab switchers inside schedule page -->
-                <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem;">
-                    <button class="editor-mode-btn active" id="btn-sched-tab-cal" onclick="switchScheduleTab('calendar')" style="background:transparent; border:none; padding:0.5rem 1rem; color:var(--tab-active-color); font-weight:700; cursor:pointer;">📅 월간 달력</button>
-                    <button class="editor-mode-btn" id="btn-sched-tab-list" onclick="switchScheduleTab('list')" style="background:transparent; border:none; padding:0.5rem 1rem; color:var(--text-secondary); cursor:pointer;">📝 전체 일정 목록</button>
+                <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.5rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                    <button id="btn-sched-tab-cal" class="tab-btn active" onclick="switchScheduleTab('calendar')">📅 월간 달력</button>
+                    <button id="btn-sched-tab-list" class="tab-btn" onclick="switchScheduleTab('list')">📝 전체 일정 목록</button>
                 </div>
 
                 <!-- Tab 1: Monthly Calendar -->
@@ -2423,12 +2423,12 @@
                 <div class="detail-right-content" style="display:flex; flex-direction:column; gap:1.25rem; height: 100%; overflow: hidden;">
                     
                     <!-- Inner Tab switcher inside detail modal -->
-                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:1.5rem; padding-bottom:0.25rem;">
-                        <button id="btn-detail-tab-timeline" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--tab-active-color); border-bottom: 3px solid var(--primary); border-radius:0;" onclick="switchDetailRightTab('timeline')">📋 과거 섬김 기록</button>
-                        <button id="btn-detail-tab-newlog" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('newlog')">✍️ 새 심방/상담 기록 작성</button>
-                        <button id="btn-detail-tab-prayers" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('prayers')">🙏 기도부탁 명단</button>
-                        <button id="btn-detail-tab-history" class="btn" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('history')">⏳ 인적 변동 기록</button>
-                        <button id="btn-detail-tab-evacareer" class="btn hidden" style="border:none; background:transparent; font-weight:700; color:var(--text-secondary); border-radius:0;" onclick="switchDetailRightTab('evacareer')">💼 전도인 세부 이력</button>
+                    <div class="detail-tabs" style="display:flex; border-bottom:1px solid var(--card-border); gap:0.4rem; padding-bottom:0.5rem; flex-wrap:wrap;">
+                        <button id="btn-detail-tab-timeline" class="tab-btn active" onclick="switchDetailRightTab('timeline')">📋 과거 섬김 기록</button>
+                        <button id="btn-detail-tab-newlog" class="tab-btn" onclick="switchDetailRightTab('newlog')">✍️ 새 심방/상담 기록 작성</button>
+                        <button id="btn-detail-tab-prayers" class="tab-btn" onclick="switchDetailRightTab('prayers')">🙏 기도부탁 명단</button>
+                        <button id="btn-detail-tab-history" class="tab-btn" onclick="switchDetailRightTab('history')">⏳ 인적 변동 기록</button>
+                        <button id="btn-detail-tab-evacareer" class="tab-btn hidden" onclick="switchDetailRightTab('evacareer')">💼 전도인 세부 이력</button>
                     </div>
 
                     <!-- Detail Tab Content 1: Past Timeline logs -->
@@ -4598,17 +4598,13 @@
             const panelExcel = document.getElementById('parser-tab-excel-panel');
 
             if (tabName === 'text') {
-                btnText.style.color = 'var(--tab-active-color)';
-                btnText.style.borderBottom = '3px solid var(--primary)';
-                btnExcel.style.color = 'var(--text-secondary)';
-                btnExcel.style.borderBottom = 'none';
+                btnText.classList.add('active');
+                btnExcel.classList.remove('active');
                 panelText.classList.remove('hidden');
                 panelExcel.classList.add('hidden');
             } else {
-                btnExcel.style.color = 'var(--tab-active-color)';
-                btnExcel.style.borderBottom = '3px solid var(--primary)';
-                btnText.style.color = 'var(--text-secondary)';
-                btnText.style.borderBottom = 'none';
+                btnExcel.classList.add('active');
+                btnText.classList.remove('active');
                 panelExcel.classList.remove('hidden');
                 panelText.classList.add('hidden');
             }
@@ -4995,46 +4991,32 @@
             const panelEvaCareer = document.getElementById('detail-tab-evacareer-panel');
 
             [btnTimeline, btnNewlog, btnPrayers, btnHistory, btnEvaCareer].forEach(b => {
-                if (b) {
-                    b.style.color = 'var(--text-secondary)';
-                    b.style.borderBottom = 'none';
-                }
+                if (b) b.classList.remove('active');
             });
             [panelTimeline, panelNewlog, panelPrayers, panelHistory, panelEvaCareer].forEach(p => {
                 if (p) p.classList.add('hidden');
             });
 
             if (tabName === 'timeline') {
-                btnTimeline.style.color = 'var(--tab-active-color)';
-                btnTimeline.style.borderBottom = '3px solid var(--primary)';
-                panelTimeline.classList.remove('hidden');
+                if (btnTimeline) btnTimeline.classList.add('active');
+                if (panelTimeline) panelTimeline.classList.remove('hidden');
             } else if (tabName === 'newlog') {
-                btnNewlog.style.color = 'var(--tab-active-color)';
-                btnNewlog.style.borderBottom = '3px solid var(--primary)';
-                panelNewlog.classList.remove('hidden');
+                if (btnNewlog) btnNewlog.classList.add('active');
+                if (panelNewlog) panelNewlog.classList.remove('hidden');
             } else if (tabName === 'prayers') {
-                if (btnPrayers) {
-                    btnPrayers.style.color = 'var(--tab-active-color)';
-                    btnPrayers.style.borderBottom = '3px solid var(--primary)';
-                }
+                if (btnPrayers) btnPrayers.classList.add('active');
                 if (panelPrayers) {
                     panelPrayers.classList.remove('hidden');
                     renderMemberPrayersList();
                 }
             } else if (tabName === 'history') {
-                if (btnHistory) {
-                    btnHistory.style.color = 'var(--tab-active-color)';
-                    btnHistory.style.borderBottom = '3px solid var(--primary)';
-                }
+                if (btnHistory) btnHistory.classList.add('active');
                 if (panelHistory) {
                     panelHistory.classList.remove('hidden');
                     renderMemberHistoryTimeline();
                 }
             } else if (tabName === 'evacareer') {
-                if (btnEvaCareer) {
-                    btnEvaCareer.style.color = 'var(--tab-active-color)';
-                    btnEvaCareer.style.borderBottom = '3px solid var(--primary)';
-                }
+                if (btnEvaCareer) btnEvaCareer.classList.add('active');
                 if (panelEvaCareer) {
                     panelEvaCareer.classList.remove('hidden');
                 }
@@ -6694,21 +6676,13 @@ ${m.notes || '등록된 메모가 없습니다.'}
 
             if (tab === 'calendar') {
                 btnCal.classList.add('active');
-                btnCal.style.color = 'var(--tab-active-color)';
-                btnCal.style.fontWeight = '700';
                 btnList.classList.remove('active');
-                btnList.style.color = 'var(--text-secondary)';
-                btnList.style.fontWeight = '500';
                 panelCal.classList.remove('hidden');
                 panelList.classList.add('hidden');
                 renderLocalCalendar();
             } else {
                 btnCal.classList.remove('active');
-                btnCal.style.color = 'var(--text-secondary)';
-                btnCal.style.fontWeight = '500';
                 btnList.classList.add('active');
-                btnList.style.color = 'var(--tab-active-color)';
-                btnList.style.fontWeight = '700';
                 panelCal.classList.add('hidden');
                 panelList.classList.remove('hidden');
                 renderScheduleTimeline();
