@@ -3271,6 +3271,24 @@
             });
         }
 
+        function saveSettingsState() {
+            safeStorage.setItem('ssm_parishes', JSON.stringify(parishes));
+            safeStorage.setItem('ssm_departments', JSON.stringify(departments));
+            safeStorage.setItem('ssm_fellowships', JSON.stringify(fellowships));
+            safeStorage.setItem('ssm_groups', JSON.stringify(groups));
+            
+            // Push to Firebase RTDB if connected
+            pushDataToFirebase('settings', {
+                parishes: parishes,
+                departments: departments,
+                fellowships: fellowships,
+                groups: groups
+            });
+            
+            setParishDeptSettingsView();
+            updateFormSelectors();
+        }
+
         function initLockSettingsView() {
             const lockEnabled = safeStorage.getItem('ssm_lock_enabled') === 'true';
             const checkbox = document.getElementById('setting-lock-enabled');
@@ -3798,9 +3816,7 @@
             }
 
             departments.push(trimmed);
-            safeStorage.setItem('ssm_departments', JSON.stringify(departments));
-            
-            updateFormSelectors();
+            saveSettingsState();
             
             const modalDept = document.getElementById('member-modal-dept');
             if (modalDept) modalDept.value = trimmed;
@@ -3820,9 +3836,7 @@
             }
 
             fellowships.push(trimmed);
-            safeStorage.setItem('ssm_fellowships', JSON.stringify(fellowships));
-            
-            updateFormSelectors();
+            saveSettingsState();
             
             const modalFellowship = document.getElementById('member-modal-fellowship');
             if (modalFellowship) modalFellowship.value = trimmed;
@@ -3842,9 +3856,7 @@
             }
 
             groups.push(trimmed);
-            safeStorage.setItem('ssm_groups', JSON.stringify(groups));
-            
-            updateFormSelectors();
+            saveSettingsState();
             
             const modalGroup = document.getElementById('member-modal-group');
             if (modalGroup) modalGroup.value = trimmed;
@@ -3950,56 +3962,73 @@
         // ==========================================
         // 👥 MEMBER MODAL CRUD
         // ==========================================
+        // Safe Defensive DOM Helpers to prevent mobile Safari crashes
+        function setInputValue(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        }
+        function setHtmlContent(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+        function setClassHidden(id, shouldHide) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (shouldHide) el.classList.add('hidden');
+                else el.classList.remove('hidden');
+            }
+        }
+
         let modalRelations = [];
 
         function openAddMemberModal() {
-            document.getElementById('member-modal-title').textContent = "➕ 개별 성도 수기 등록";
-            document.getElementById('member-modal-id').value = '';
-            document.getElementById('member-modal-name').value = '';
-            document.getElementById('member-modal-gender').value = '남';
-            document.getElementById('member-modal-birth').value = '';
-            document.getElementById('member-modal-salvation').value = '';
-            document.getElementById('member-modal-duty').value = '';
-            document.getElementById('member-modal-church').value = '';
-            document.getElementById('member-modal-parish').value = parishes[0] || '';
-            document.getElementById('member-modal-dept').value = departments[0] || '';
-            document.getElementById('member-modal-fellowship').value = fellowships[0] || '';
-            document.getElementById('member-modal-group').value = groups[0] || '';
-            document.getElementById('member-modal-phone').value = '';
-            document.getElementById('member-modal-address').value = '';
-            document.getElementById('member-modal-family').value = '';
-            document.getElementById('member-modal-notes').value = '';
+            setInputValue('member-modal-id', '');
+            setHtmlContent('member-modal-title', '➕ 개별 성도 수기 등록');
+            setInputValue('member-modal-name', '');
+            setInputValue('member-modal-gender', '남');
+            setInputValue('member-modal-birth', '');
+            setInputValue('member-modal-salvation', '');
+            setInputValue('member-modal-duty', '');
+            setInputValue('member-modal-church', '');
+            setInputValue('member-modal-parish', parishes[0] || '');
+            setInputValue('member-modal-dept', departments[0] || '');
+            setInputValue('member-modal-fellowship', fellowships[0] || '');
+            setInputValue('member-modal-group', groups[0] || '');
+            setInputValue('member-modal-phone', '');
+            setInputValue('member-modal-address', '');
+            setInputValue('member-modal-family', '');
+            setInputValue('member-modal-notes', '');
 
-            document.getElementById('member-modal-photo-data').value = '';
-            document.getElementById('member-modal-photo-preview').innerHTML = '👤';
-            document.getElementById('member-modal-photo-input').value = '';
+            setInputValue('member-modal-photo-data', '');
+            setHtmlContent('member-modal-photo-preview', '👤');
+            setInputValue('member-modal-photo-input', '');
 
             modalRelations = [];
-            document.getElementById('member-modal-relations-data').value = '[]';
-            document.getElementById('member-modal-rel-type-select').value = '부부';
-            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
-            document.getElementById('member-modal-rel-custom-val1').value = '';
-            document.getElementById('member-modal-rel-custom-val2').value = '';
+            setInputValue('member-modal-relations-data', '[]');
+            setInputValue('member-modal-rel-type-select', '부부');
+            setClassHidden('member-modal-rel-custom-panel', true);
+            setInputValue('member-modal-rel-custom-val1', '');
+            setInputValue('member-modal-rel-custom-val2', '');
             
             // Clear evangelist details
-            document.getElementById('member-modal-eva-church').value = '';
-            document.getElementById('member-modal-eva-role').value = '';
-            document.getElementById('member-modal-eva-career').value = '';
-            document.getElementById('member-modal-eva-education').value = '';
-            document.getElementById('member-modal-eva-church-history').value = '';
-            document.getElementById('member-modal-eva-social-career').value = '';
+            setInputValue('member-modal-eva-church', '');
+            setInputValue('member-modal-eva-role', '');
+            setInputValue('member-modal-eva-career', '');
+            setInputValue('member-modal-eva-education', '');
+            setInputValue('member-modal-eva-church-history', '');
+            setInputValue('member-modal-eva-social-career', '');
             handleMemberModalGroupChange();
 
             // Clear history log modal variables
             modalHistoryLogs = [];
-            document.getElementById('member-modal-hist-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('member-modal-hist-content').value = '';
+            setInputValue('member-modal-hist-date', new Date().toISOString().split('T')[0]);
+            setInputValue('member-modal-hist-content', '');
             renderHistoryInModal();
             
             updateRelationTargetDropdown('');
             renderRelationsInModal();
 
-            document.getElementById('member-modal').classList.remove('hidden');
+            setClassHidden('member-modal', false);
         }
 
         function triggerEditMemberFromDetail() {
@@ -5436,10 +5465,8 @@ ${content}
             }
 
             parishes.push(name);
-            safeStorage.setItem('ssm_parishes', JSON.stringify(parishes));
             nameInput.value = '';
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
 
             // Update aside panel
             document.getElementById('aside-parish-name').textContent = parishes[0] || '구역없음';
@@ -5448,9 +5475,7 @@ ${content}
         function deleteParishSetting(idx) {
             if (!confirm(`[${parishes[idx]}] 구역을 삭제하시겠습니까?`)) return;
             parishes.splice(idx, 1);
-            safeStorage.setItem('ssm_parishes', JSON.stringify(parishes));
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
 
             // Update aside panel
             document.getElementById('aside-parish-name').textContent = parishes[0] || '구역없음';
@@ -5467,10 +5492,8 @@ ${content}
             }
 
             departments.push(name);
-            safeStorage.setItem('ssm_departments', JSON.stringify(departments));
             nameInput.value = '';
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
 
             // Update aside panel
             document.getElementById('aside-dept-name').textContent = departments[0] || '부서없음';
@@ -5479,9 +5502,7 @@ ${content}
         function deleteDeptSetting(idx) {
             if (!confirm(`[${departments[idx]}] 부서를 삭제하시겠습니까?`)) return;
             departments.splice(idx, 1);
-            safeStorage.setItem('ssm_departments', JSON.stringify(departments));
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
 
             // Update aside panel
             document.getElementById('aside-dept-name').textContent = departments[0] || '부서없음';
@@ -5498,18 +5519,14 @@ ${content}
             }
 
             fellowships.push(name);
-            safeStorage.setItem('ssm_fellowships', JSON.stringify(fellowships));
             nameInput.value = '';
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
         }
 
         function deleteFellowshipSetting(idx) {
             if (!confirm(`[${fellowships[idx]}] 교제부서를 삭제하시겠습니까?`)) return;
             fellowships.splice(idx, 1);
-            safeStorage.setItem('ssm_fellowships', JSON.stringify(fellowships));
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
         }
 
         function addGroupSetting() {
@@ -5523,18 +5540,14 @@ ${content}
             }
 
             groups.push(name);
-            safeStorage.setItem('ssm_groups', JSON.stringify(groups));
             nameInput.value = '';
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
         }
 
         function deleteGroupSetting(idx) {
             if (!confirm(`[${groups[idx]}] 그룹을 삭제하시겠습니까?`)) return;
             groups.splice(idx, 1);
-            safeStorage.setItem('ssm_groups', JSON.stringify(groups));
-            setParishDeptSettingsView();
-            updateFormSelectors();
+            saveSettingsState();
         }
 
         function saveApiSettings() {
@@ -6911,59 +6924,59 @@ ${m.notes || '등록된 메모가 없습니다.'}
             const m = members.find(item => item.id === mId);
             if (!m) return;
 
-            document.getElementById('member-modal-id').value = m.id;
-            document.getElementById('member-modal-title').textContent = "✏️ 성도 신상정보 수정";
-            document.getElementById('member-modal-name').value = m.name;
-            document.getElementById('member-modal-gender').value = m.gender || '남';
-            document.getElementById('member-modal-birth').value = m.birth || '';
-            document.getElementById('member-modal-salvation').value = m.salvationDate || '';
-            document.getElementById('member-modal-duty').value = m.duty || '';
-            document.getElementById('member-modal-church').value = m.church || '';
-            document.getElementById('member-modal-parish').value = m.parish || '';
-            document.getElementById('member-modal-dept').value = m.department || '';
-            document.getElementById('member-modal-fellowship').value = m.fellowship || '';
-            document.getElementById('member-modal-group').value = m.group || '';
-            document.getElementById('member-modal-phone').value = m.phone || '';
-            document.getElementById('member-modal-address').value = m.address || '';
-            document.getElementById('member-modal-family').value = m.family || '';
-            document.getElementById('member-modal-notes').value = m.notes || '';
+            setInputValue('member-modal-id', m.id);
+            setHtmlContent('member-modal-title', '✏️ 성도 신상정보 수정');
+            setInputValue('member-modal-name', m.name);
+            setInputValue('member-modal-gender', m.gender || '남');
+            setInputValue('member-modal-birth', m.birth || '');
+            setInputValue('member-modal-salvation', m.salvationDate || '');
+            setInputValue('member-modal-duty', m.duty || '');
+            setInputValue('member-modal-church', m.church || '');
+            setInputValue('member-modal-parish', m.parish || '');
+            setInputValue('member-modal-dept', m.department || '');
+            setInputValue('member-modal-fellowship', m.fellowship || '');
+            setInputValue('member-modal-group', m.group || '');
+            setInputValue('member-modal-phone', m.phone || '');
+            setInputValue('member-modal-address', m.address || '');
+            setInputValue('member-modal-family', m.family || '');
+            setInputValue('member-modal-notes', m.notes || '');
 
-            document.getElementById('member-modal-photo-input').value = '';
+            setInputValue('member-modal-photo-input', '');
             if (m.photo) {
-                document.getElementById('member-modal-photo-data').value = m.photo;
-                document.getElementById('member-modal-photo-preview').innerHTML = `<img src="${m.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                setInputValue('member-modal-photo-data', m.photo);
+                setHtmlContent('member-modal-photo-preview', `<img src="${m.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`);
             } else {
-                document.getElementById('member-modal-photo-data').value = '';
-                document.getElementById('member-modal-photo-preview').innerHTML = '👤';
+                setInputValue('member-modal-photo-data', '');
+                setHtmlContent('member-modal-photo-preview', '👤');
             }
 
             modalRelations = m.relations || [];
-            document.getElementById('member-modal-relations-data').value = JSON.stringify(modalRelations);
-            document.getElementById('member-modal-rel-type-select').value = '부부';
-            document.getElementById('member-modal-rel-custom-panel').classList.add('hidden');
-            document.getElementById('member-modal-rel-custom-val1').value = '';
-            document.getElementById('member-modal-rel-custom-val2').value = '';
+            setInputValue('member-modal-relations-data', JSON.stringify(modalRelations));
+            setInputValue('member-modal-rel-type-select', '부부');
+            setClassHidden('member-modal-rel-custom-panel', true);
+            setInputValue('member-modal-rel-custom-val1', '');
+            setInputValue('member-modal-rel-custom-val2', '');
             
             // Load evangelist details if exists
             const ed = m.evangelistDetails || {};
-            document.getElementById('member-modal-eva-church').value = ed.currentChurch || '';
-            document.getElementById('member-modal-eva-role').value = ed.role || '';
-            document.getElementById('member-modal-eva-career').value = ed.evangelismCareer || '';
-            document.getElementById('member-modal-eva-education').value = ed.education || '';
-            document.getElementById('member-modal-eva-church-history').value = ed.churchHistory || '';
-            document.getElementById('member-modal-eva-social-career').value = ed.socialCareer || '';
+            setInputValue('member-modal-eva-church', ed.currentChurch || '');
+            setInputValue('member-modal-eva-role', ed.role || '');
+            setInputValue('member-modal-eva-career', ed.evangelismCareer || '');
+            setInputValue('member-modal-eva-education', ed.education || '');
+            setInputValue('member-modal-eva-church-history', ed.churchHistory || '');
+            setInputValue('member-modal-eva-social-career', ed.socialCareer || '');
             handleMemberModalGroupChange();
 
             // Load history logs list
             modalHistoryLogs = m.historyLogs ? [...m.historyLogs] : [];
-            document.getElementById('member-modal-hist-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('member-modal-hist-content').value = '';
+            setInputValue('member-modal-hist-date', new Date().toISOString().split('T')[0]);
+            setInputValue('member-modal-hist-content', '');
             renderHistoryInModal();
 
             updateRelationTargetDropdown(m.id);
             renderRelationsInModal();
 
-            document.getElementById('member-modal').classList.remove('hidden');
+            setClassHidden('member-modal', false);
         }
 
         // ==========================================
