@@ -6581,6 +6581,106 @@ ${modeInstruction}
             }
         }
 
+        function generateContextForQuery(query) {
+            const cleanedQuery = query.replace(/\s+/g, '').toLowerCase();
+            
+            // 1. 구역 매칭 (Lexical Exact Match)
+            let matchedParishes = [];
+            if (typeof parishes !== 'undefined') {
+                parishes.forEach(p => {
+                    const cleanedP = p.replace(/\s+/g, '').toLowerCase();
+                    if (cleanedQuery.includes(cleanedP) || (cleanedP.replace('구역', '') && cleanedQuery.includes(cleanedP.replace('구역', '') + '구역'))) {
+                        matchedParishes.push(p);
+                    } else {
+                        const numMatch = cleanedP.match(/\d+/);
+                        if (numMatch) {
+                            const num = numMatch[0];
+                            const regex = new RegExp(num + '\\s*(구역|조|교구|구)');
+                            if (regex.test(query.toLowerCase())) {
+                                matchedParishes.push(p);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. 성도 이름 매칭 (Lexical Exact Match)
+            let matchedMembers = [];
+            members.forEach(m => {
+                if (m.name && m.name.length >= 2) {
+                    if (query.includes(m.name)) {
+                        matchedMembers.push(m);
+                    }
+                }
+            });
+
+            // 3. 필터링된 성도 데이터 추출
+            let targetMembers = [];
+            let filterType = '전체 데이터';
+
+            if (matchedMembers.length > 0) {
+                targetMembers = matchedMembers;
+                filterType = `이름 검색 필터링: [${matchedMembers.map(m => m.name).join(', ')}]`;
+            } else if (matchedParishes.length > 0) {
+                targetMembers = members.filter(m => matchedParishes.includes(m.parish));
+                filterType = `구역 검색 필터링: [${matchedParishes.join(', ')}]`;
+            } else {
+                targetMembers = members;
+                filterType = '전체 데이터 (기본 탐색)';
+            }
+
+            // 4. 데이터 메타데이터화 및 평탄화 (Flat tagging structure)
+            let contextBlocks = [];
+            contextBlocks.push(`=== 데이터 필터링 모드: ${filterType} ===`);
+            contextBlocks.push(`조회 대상 성도 수: ${targetMembers.length}명\n`);
+
+            targetMembers.forEach(m => {
+                contextBlocks.push(`[성도 프로필]`);
+                contextBlocks.push(`- 성도ID: ${m.id}`);
+                contextBlocks.push(`- 이름: ${m.name}`);
+                contextBlocks.push(`- 직분: ${m.duty || '성도'}`);
+                contextBlocks.push(`- 구역: ${m.parish || '구역없음'}`);
+                contextBlocks.push(`- 소속부서: ${m.department || '없음'}`);
+                contextBlocks.push(`- 교제부서: ${m.fellowship || '없음'}`);
+                contextBlocks.push(`- 소속그룹: ${m.group || '없음'}`);
+                contextBlocks.push(`- 소속교회: ${m.church || '기입되지 않음'}`);
+                if (m.family) contextBlocks.push(`- 가족구성: ${m.family}`);
+
+                // 기도부탁
+                const prayers = m.prayerRequests || [];
+                if (prayers.length > 0) {
+                    contextBlocks.push(`  [기도부탁 목록 (총 ${prayers.length}건)]`);
+                    prayers.forEach((p, idx) => {
+                        contextBlocks.push(`  - 기도부탁 #${idx + 1}`);
+                        contextBlocks.push(`    * 요청자: ${m.name} ${m.duty || '성도'}`);
+                        contextBlocks.push(`    * 구역: ${m.parish || '구역없음'}`);
+                        contextBlocks.push(`    * 대상자 이름(관계): ${p.name} (${p.relation})`);
+                        contextBlocks.push(`    * 대상 나이/주소: ${p.age ? p.age + '세' : '미기입'} / ${p.address || '미기입'}`);
+                        contextBlocks.push(`    * 구원여부: ${p.salvation === 'O' ? '구원받음' : '미구원'}`);
+                        contextBlocks.push(`    * 기도내용: ${p.notes}`);
+                        contextBlocks.push(`    * 등록일자: ${p.registeredAt || '미기입'}`);
+                    });
+                }
+
+                // 심방/예배 기록
+                const logs = m.visitLogs || [];
+                if (logs.length > 0) {
+                    contextBlocks.push(`  [심방/상담/예배 기록 (총 ${logs.length}건)]`);
+                    logs.forEach((l, idx) => {
+                        contextBlocks.push(`  - 심방기록 #${idx + 1}`);
+                        contextBlocks.push(`    * 심방대상: ${m.name} ${m.duty || '성도'}`);
+                        contextBlocks.push(`    * 구역: ${m.parish || '구역없음'}`);
+                        contextBlocks.push(`    * 일자: ${l.date}`);
+                        contextBlocks.push(`    * 유형/제목: ${l.type} / ${l.title}`);
+                        contextBlocks.push(`    * 기록내용: ${l.content}`);
+                    });
+                }
+                contextBlocks.push(`---------------------------------------\n`);
+            });
+
+            return contextBlocks.join('\n');
+        }
+
         async function sendChatbotQuery() {
             const apiKey = safeStorage.getItem('ssm_api_key');
             if (!apiKey) {
@@ -6616,22 +6716,18 @@ ${modeInstruction}
             try {
                 const model = safeStorage.getItem('ssm_api_model') || 'gemini-2.5-flash';
                 
-                // Pre-process database to prevent base64 images from bloating prompt
-                const sanitizedMembers = members.map(m => {
-                    const copy = { ...m };
-                    delete copy.photo; // Remove photo data to keep context small and focus on text
-                    return copy;
-                });
+                // Generate targeted context using metadata lexical filtering (RAG 전처리)
+                const targetedContext = generateContextForQuery(query);
 
                 const systemPrompt = `당신은 목회자의 목회 행정을 돕는 인공지능 목회 비서입니다.
-아래에 제공되는 성도 명단 및 심방/상담/예배 기록 데이터베이스를 바탕으로 사용자의 질문에 정확하고 은혜롭게 답변해 주세요.
+아래에 제공되는 필터링된 성도 명단 및 심방/상담/예배 기록 데이터를 바탕으로 사용자의 질문에 정확하고 은혜롭게 답변해 주세요.
 
 [성도 및 심방 기록 데이터베이스]:
-${JSON.stringify(sanitizedMembers, null, 2)}
+${targetedContext}
 
 [답변 작성 지침]:
-1. 오직 제공된 데이터베이스에 근거하여 답변해 주세요. 만약 정보가 없다면 정중히 "관련 기록을 찾을 수 없습니다"라고 답변해 주세요.
-2. 성도의 신앙 고민, 간증, 기도제목, 상담 결과를 자세히 확인하여 질문한 내용을 찾아주세요.
+1. 오직 제공된 데이터베이스 내용에만 근거하여 답변해 주세요. 데이터베이스에 존재하지 않는 성도나 구역의 정보는 임의로 상상(환각)하여 지어내지 마시고, 정중히 "관련 기록을 찾을 수 없습니다"라고 답변해 주세요.
+2. 성도 개별 프로필과 기도부탁/심방기록의 요청자/대상을 명확히 매칭해 주시고, 다른 성도의 기도부탁을 섞어서 설명하지 않도록 주의해 주세요.
 3. 교회의 보안 및 개인정보 보호를 고려하여 차분하고 신뢰성 있는 어조를 사용해 주세요.
 4. 성도의 이름과 직분을 정확히 매칭해 주시고, 날짜를 언급할 때 연도/월/일을 명확히 기술해 주세요.
 5. 본문 중 '공동체' 단어 대신 '그리스도인' 또는 '교회' 또는 '교제'로 변경해 작성하세요.
