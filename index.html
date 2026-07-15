@@ -1412,6 +1412,9 @@
         <div class="mobile-nav-item" data-target="view-prayers">
             <button>🙏 기도부탁</button>
         </div>
+        <div class="mobile-nav-item" data-target="view-globalsearch">
+            <button>🔍 통합검색</button>
+        </div>
         <div class="mobile-nav-item" data-target="view-settings">
             <button>⚙️ 설정 관리</button>
         </div>
@@ -1445,6 +1448,9 @@
             </li>
             <li class="nav-item" data-target="view-prayers">
                 <button>🙏 기도부탁</button>
+            </li>
+            <li class="nav-item" data-target="view-globalsearch">
+                <button>🔍 통합검색</button>
             </li>
             <li class="nav-item" data-target="view-settings">
                 <button>⚙️ 설정 관리</button>
@@ -2087,6 +2093,28 @@
                         <!-- Dynamic rendering -->
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- VIEW: GLOBAL INTEGRATED SEARCH -->
+        <section id="view-globalsearch" class="view-panel hidden" style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+            <header style="margin-bottom: 1rem; flex-shrink: 0;">
+                <h1 class="page-title">🔍 통합 검색</h1>
+                <p class="page-desc">성도명, 기도부탁(대상자/내용), 심방기록(제목/내용)을 포함한 전체 데이터베이스를 한꺼번에 통합 검색합니다.</p>
+            </header>
+
+            <div class="glass-card" style="margin-bottom: 1rem; padding: 1.2rem; flex-shrink: 0;">
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <input type="text" id="globalsearch-input" class="form-control" placeholder="성도 이름, 직분, 구역, 기도제목, 심방 일지 키워드 입력... (예: 사랑)" oninput="handleGlobalSearch()" style="flex: 1; margin-bottom: 0; font-size: 1.05rem; padding: 0.75rem 1rem; height: 48px;">
+                    <button class="btn btn-primary" onclick="handleGlobalSearch()" style="height: 48px; width: 80px; font-weight: 700;">검색</button>
+                </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 2rem;" id="globalsearch-results-container">
+                <div style="text-align: center; color: var(--text-secondary); padding: 4rem 0;">
+                    <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🔍</span>
+                    검색어를 입력하시면 성도 정보, 기도부탁, 심방기록에 매칭되는 결과를 즉시 분류하여 조회합니다.
+                </div>
             </div>
         </section>
     </main>
@@ -3792,6 +3820,13 @@
                     if (target === 'view-prayers') {
                         renderAllPrayersList();
                         updatePrayersFolderFilter();
+                    }
+                    if (target === 'view-globalsearch') {
+                        const input = document.getElementById('globalsearch-input');
+                        if (input) {
+                            input.focus();
+                        }
+                        handleGlobalSearch();
                     }
 
                     // Auto-close mobile sidebar drawer on menu click (fallback)
@@ -7176,6 +7211,192 @@ ${targetedContext}
 
         function filterRelationTargetDropdown() {
             updateRelationTargetDropdown();
+        }
+
+        // ==========================================
+        // 🔍 GLOBAL INTEGRATED SEARCH ENGINE
+        // ==========================================
+        function handleGlobalSearch() {
+            const container = document.getElementById('globalsearch-results-container');
+            if (!container) return;
+
+            const queryInput = document.getElementById('globalsearch-input');
+            const query = queryInput ? queryInput.value.trim() : '';
+
+            if (!query) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 4rem 0;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🔍</span>
+                        검색어를 입력하시면 성도 정보, 기도부탁, 심방기록에 매칭되는 결과를 즉시 분류하여 조회합니다.
+                    </div>
+                `;
+                return;
+            }
+
+            const searchVal = query.toLowerCase();
+
+            let matchedMembers = [];
+            let matchedPrayers = [];
+            let matchedLogs = [];
+
+            members.forEach(m => {
+                // 1. 성도명/직분/구역 검색
+                const nameMatch = m.name && m.name.toLowerCase().includes(searchVal);
+                const dutyMatch = m.duty && m.duty.toLowerCase().includes(searchVal);
+                const parishMatch = m.parish && m.parish.toLowerCase().includes(searchVal);
+                const groupMatch = m.group && m.group.toLowerCase().includes(searchVal);
+                
+                if (nameMatch || dutyMatch || parishMatch || groupMatch) {
+                    matchedMembers.push(m);
+                }
+
+                // 2. 기도부탁 검색 (대상자 이름 또는 내용)
+                const prayers = m.prayerRequests || [];
+                prayers.forEach(p => {
+                    const pNameMatch = p.name && p.name.toLowerCase().includes(searchVal);
+                    const pNotesMatch = p.notes && p.notes.toLowerCase().includes(searchVal);
+                    const pRelMatch = p.relation && p.relation.toLowerCase().includes(searchVal);
+
+                    if (pNameMatch || pNotesMatch || pRelMatch) {
+                        matchedPrayers.push({
+                            prayer: p,
+                            member: m
+                        });
+                    }
+                });
+
+                // 3. 심방/목회 기록 검색 (제목 또는 내용)
+                const logs = m.visitLogs || [];
+                logs.forEach(l => {
+                    const lTitleMatch = l.title && l.title.toLowerCase().includes(searchVal);
+                    const lContentMatch = l.content && l.content.toLowerCase().includes(searchVal);
+
+                    if (lTitleMatch || lContentMatch) {
+                        matchedLogs.push({
+                            log: l,
+                            member: m
+                        });
+                    }
+                });
+            });
+
+            // 렌더링 HTML 빌드
+            let html = '';
+
+            // 헬퍼: 검색어 강조 표시
+            function highlightText(text, search) {
+                if (!text) return '';
+                const idx = text.toLowerCase().indexOf(search);
+                if (idx === -1) return text;
+                const originalStr = text.substr(idx, search.length);
+                return text.replace(new RegExp(search, 'gi'), `<span style="background: rgba(139, 92, 246, 0.3); color: #c084fc; font-weight: 700; border-radius: 2px; padding: 0 2px;">${originalStr}</span>`);
+            }
+
+            // 1. 성도 명단 매칭 섹션
+            if (matchedMembers.length > 0) {
+                html += `
+                    <div class="glass-card" style="padding: 1.2rem;">
+                        <h3 style="color: white; font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            👥 성도 명단 매칭 <span class="badge badge-violet" style="font-size: 0.75rem;">${matchedMembers.length}</span>
+                        </h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">
+                `;
+                matchedMembers.forEach(m => {
+                    let ageStr = '';
+                    if (m.birth) {
+                        const age = new Date().getFullYear() - parseInt(m.birth) + 1;
+                        ageStr = `, ${age}세`;
+                    }
+                    const churchStr = m.church ? ` (${m.church})` : '';
+
+                    html += `
+                        <div onclick="openMemberDetailModal('${m.id}')" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 0.25rem;" onmouseover="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(139, 92, 246, 0.3)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.02)'; this.style.borderColor='var(--card-border)';">
+                            <span style="font-weight: 700; color: white; font-size: 0.9rem;">${highlightText(m.name, searchVal)} ${m.duty || '성도'}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">${m.parish || '구역없음'}${ageStr}${churchStr}</span>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. 기도부탁 매칭 섹션
+            if (matchedPrayers.length > 0) {
+                html += `
+                    <div class="glass-card" style="padding: 1.2rem;">
+                        <h3 style="color: white; font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            🙏 기도부탁 / 간증 매칭 <span class="badge badge-emerald" style="font-size: 0.75rem;">${matchedPrayers.length}</span>
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                `;
+                matchedPrayers.forEach(item => {
+                    const p = item.prayer;
+                    const m = item.member;
+                    
+                    html += `
+                        <div onclick="openMemberDetailModal('${m.id}'); setTimeout(() => switchDetailRightTab('prayers'), 150);" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.8rem 1rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 0.4rem; text-align: left;" onmouseover="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(16, 185, 129, 0.3)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.02)'; this.style.borderColor='var(--card-border)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span style="font-weight: 700; color: var(--primary-hover);">${m.name} ${m.duty || '성도'} (${m.parish || '구역없음'}) 의 기도부탁</span>
+                                <span style="color: var(--text-secondary);">${p.registeredAt || '-'}</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: white;">
+                                <span style="font-weight: 600; color: #fbbf24;">대상자: ${highlightText(p.name, searchVal)} (${highlightText(p.relation, searchVal)})</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap; line-height: 1.4;">${highlightText(p.notes, searchVal)}</div>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. 심방/목회 기록 매칭 섹션
+            if (matchedLogs.length > 0) {
+                html += `
+                    <div class="glass-card" style="padding: 1.2rem;">
+                        <h3 style="color: white; font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📝 심방 및 목회 일지 매칭 <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.25); font-size: 0.75rem;">${matchedLogs.length}</span>
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                `;
+                matchedLogs.forEach(item => {
+                    const l = item.log;
+                    const m = item.member;
+                    
+                    html += `
+                        <div onclick="openMemberDetailModal('${m.id}'); setTimeout(() => switchDetailRightTab('newlog'), 150);" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.8rem 1rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 0.4rem; text-align: left;" onmouseover="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(139, 92, 246, 0.3)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.02)'; this.style.borderColor='var(--card-border)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span style="font-weight: 700; color: #a78bfa;">대상: ${m.name} ${m.duty || '성도'} (${m.parish || '구역없음'})</span>
+                                <span style="color: var(--text-secondary);">${l.date || '-'}</span>
+                            </div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: white;">
+                                [${l.type}] ${highlightText(l.title, searchVal)}
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap; line-height: 1.4;">${highlightText(l.content, searchVal)}</div>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 검색 결과가 없는 경우
+            if (matchedMembers.length === 0 && matchedPrayers.length === 0 && matchedLogs.length === 0) {
+                html = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 4rem 0;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📭</span>
+                        "${query}"(으)로 검색된 결과가 없습니다. 다시 입력해 주세요.
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
         // Utility: safe json parser
