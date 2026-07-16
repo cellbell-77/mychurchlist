@@ -2558,10 +2558,16 @@
                         <div style="display:flex; flex-direction:column; gap: 0.6rem; font-size: 0.85rem; width:100%; text-align:left;">
                             <div><span style="color:var(--text-secondary);">성별/출생:</span> <span id="detail-info-gender-birth" style="color:var(--text-primary); font-weight:500;">남 (1980년생)</span></div>
                             <div><span style="color:var(--text-secondary);">구원일:</span> <span id="detail-info-salvation" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                            <div><span style="color:var(--text-secondary);">전화번호:</span> <span id="detail-info-phone" style="color:var(--text-primary); font-weight:500;">010-1234-5678</span></div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%;">
+                                <div style="flex:1;"><span style="color:var(--text-secondary);">전화번호:</span> <span id="detail-info-phone" style="color:var(--text-primary); font-weight:500;">010-1234-5678</span></div>
+                                <a id="detail-phone-btn" class="btn" style="padding:0.15rem 0.4rem; font-size:0.75rem; border-color:var(--primary); height:22px; display:inline-flex; align-items:center; color:white; border-radius:6px; margin-bottom:0;" href="#">📞 전화</a>
+                            </div>
                             <div><span style="color:var(--text-secondary);">교회:</span> <span id="detail-info-church" style="color:var(--text-primary); font-weight:500;">-</span></div>
                             <div><span style="color:var(--text-secondary);">소속 그룹:</span> <span id="detail-info-group" style="color:var(--text-primary); font-weight:500;">-</span></div>
-                            <div><span style="color:var(--text-secondary);">주소:</span> <span id="detail-info-address" style="color:var(--text-primary); font-weight:500;">서울시 강남구</span></div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%;">
+                                <div style="flex:1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;"><span style="color:var(--text-secondary);">주소:</span> <span id="detail-info-address" style="color:var(--text-primary); font-weight:500;">서울시 강남구</span></div>
+                                <a id="detail-map-btn" class="btn btn-accent" style="padding:0.15rem 0.4rem; font-size:0.75rem; border-color:var(--accent); height:22px; display:inline-flex; align-items:center; color:white; border-radius:6px; margin-bottom:0;" target="_blank" href="#">🗺️ 지도</a>
+                            </div>
                             <div><span style="color:var(--text-secondary);">가족사항 (수기):</span> <span id="detail-info-family" style="color:var(--text-primary); font-weight:500;">배우자, 자녀 1남</span></div>
                             
                             <!-- 🤖 Evangelist Custom Fields View -->
@@ -2965,6 +2971,7 @@
         let ssmDashboardWidgets = [
             { id: 'recent-logs', title: '✍️ 최근 기록된 성도 동정', visible: true, width: 'twothirds' },
             { id: 'upcoming-events', title: '🗓️ 다가오는 일정', visible: true, width: 'third' },
+            { id: 'salvation-anniversaries', title: '🎉 오늘 구원일 성도', visible: true, width: 'third' },
             { id: 'parish-prayers', title: '🙏 구역별 최신 기도부탁', visible: false, width: 'twothirds' },
             { id: 'recent-prayers', title: '🙏 최근 등록된 모든 기도부탁', visible: false, width: 'third' },
             { id: 'parish-stats', title: '👥 구역별 성도 분포', visible: false, width: 'third' }
@@ -3746,7 +3753,14 @@
             const storedWidgets = safeStorage.getItem('ssm_dashboard_widgets');
             if (storedWidgets) {
                 try {
-                    ssmDashboardWidgets = JSON.parse(storedWidgets);
+                    let loaded = JSON.parse(storedWidgets);
+                    const baseIds = loaded.map(w => w.id);
+                    ssmDashboardWidgets.forEach(baseWidget => {
+                        if (!baseIds.includes(baseWidget.id)) {
+                            loaded.push(baseWidget);
+                        }
+                    });
+                    ssmDashboardWidgets = loaded;
                 } catch (e) {
                     console.error("Failed to parse dashboard widgets configuration", e);
                 }
@@ -4045,6 +4059,73 @@
                             });
                         }
                     }
+                    else if (widget.id === 'salvation-anniversaries') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; cursor:move;">🎉 오늘 구원일 성도</h3>
+                            <div id="dash-salvation-anniversaries-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        const container = document.getElementById('dash-salvation-anniversaries-list');
+                        const today = new Date();
+                        const todayMonth = today.getMonth() + 1;
+                        const todayDate = today.getDate();
+                        
+                        let matchCount = 0;
+                        
+                        function parseSalvationMonthDay(dateStr) {
+                            if (!dateStr) return null;
+                            const cleanStr = dateStr.replace(/\s+/g, '');
+                            const numMatches = cleanStr.match(/\d+/g);
+                            if (!numMatches) return null;
+                            
+                            if (numMatches.length >= 3) {
+                                let year = parseInt(numMatches[0]);
+                                let month = parseInt(numMatches[1]);
+                                let day = parseInt(numMatches[2]);
+                                return { year, month, day };
+                            } else if (numMatches.length === 2) {
+                                let month = parseInt(numMatches[0]);
+                                let day = parseInt(numMatches[1]);
+                                return { year: null, month, day };
+                            }
+                            return null;
+                        }
+                        
+                        members.forEach(m => {
+                            if (!m.salvationDate) return;
+                            const parsed = parseSalvationMonthDay(m.salvationDate);
+                            if (parsed && parsed.month === todayMonth && parsed.day === todayDate) {
+                                matchCount++;
+                                let anniversaryText = '';
+                                if (parsed.year) {
+                                    const yearsDiff = today.getFullYear() - parsed.year;
+                                    if (yearsDiff > 0) {
+                                        anniversaryText = ` (구원 ${yearsDiff}주년)`;
+                                    }
+                                }
+                                
+                                const div = document.createElement('div');
+                                div.style.cssText = "background:rgba(255,255,255,0.01); border:1px solid var(--card-border); padding:0.75rem; border-radius:10px; font-size:0.85rem; display:flex; flex-direction:column; gap:0.4rem;";
+                                div.innerHTML = `
+                                    <div style="display:flex; justify-content:space-between; font-weight:600; color:var(--primary-hover);">
+                                        <span>${m.name} ${m.duty || '성도'} (${m.parish || '구역없음'})</span>
+                                        <span>🎉 오늘 구원일!</span>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:var(--text-secondary);">
+                                        구원일: ${m.salvationDate}${anniversaryText}
+                                    </div>
+                                    <button class="btn" style="padding:0.15rem 0.4rem; font-size:0.75rem; align-self:flex-end; border-color:rgba(139, 92, 246, 0.2); color:white; height:24px; display:inline-flex; align-items:center; margin-bottom:0;" onclick="copySalvationCongratulation('${m.name}', '${m.duty || '성도'}', '${anniversaryText ? anniversaryText.trim() : ''}')">📋 축하메시지 복사</button>
+                                `;
+                                container.appendChild(div);
+                            }
+                        });
+                        
+                        if (matchCount === 0) {
+                            container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.85rem;">오늘 구원일을 맞이한 성도가 없습니다.</div>';
+                        }
+                    }
                     else if (widget.id === 'parish-prayers') {
                         widgetEl.innerHTML = `
                             <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem; cursor:move;">🙏 구역별 최신 기도부탁</h3>
@@ -4335,6 +4416,15 @@
             
             activeResizingWidgetId = null;
             renderDashboard();
+        }
+
+        function copySalvationCongratulation(name, duty, anniversary) {
+            const text = `샬롬! ${name} ${duty}님, 오늘 구원(거듭남)을 받으신 축복된 기념일${anniversary ? ' ' + anniversary : ''}을 진심으로 축하드립니다. 주님의 변함없는 은혜와 평강이 늘 함께하시길 기도합니다.`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('구원일 축하 메시지가 클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
         }
 
         // ==========================================
@@ -5889,6 +5979,27 @@
             document.getElementById('detail-info-church').textContent = m.church || '기입되지 않음';
             document.getElementById('detail-info-group').textContent = m.group || '그룹미지정';
             document.getElementById('detail-info-address').textContent = m.address || '등록된 주소 없음';
+
+            // Bind phone call & naver map search links
+            const phoneBtn = document.getElementById('detail-phone-btn');
+            if (phoneBtn) {
+                if (m.phone) {
+                    phoneBtn.href = `tel:${m.phone}`;
+                    phoneBtn.style.display = 'inline-flex';
+                } else {
+                    phoneBtn.style.display = 'none';
+                }
+            }
+
+            const mapBtn = document.getElementById('detail-map-btn');
+            if (mapBtn) {
+                if (m.address) {
+                    mapBtn.href = `https://map.naver.com/v5/search/${encodeURIComponent(m.address)}`;
+                    mapBtn.style.display = 'inline-flex';
+                } else {
+                    mapBtn.style.display = 'none';
+                }
+            }
             document.getElementById('detail-info-family').textContent = m.family || '등록된 가족관계 없음';
             document.getElementById('detail-info-notes').textContent = m.notes || '성도 특이사항 및 목회 메모가 등록되지 않았습니다.';
             
