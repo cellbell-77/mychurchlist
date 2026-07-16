@@ -487,12 +487,6 @@
             transform: scale(1.01);
             transition: transform 0.2s;
         }
-        .dashboard-lower-grid.dragging-mode * {
-            pointer-events: none !important;
-        }
-        .dashboard-lower-grid.dragging-mode > div {
-            pointer-events: auto !important;
-        }
 
         /* Widget Resizer Handle */
         .widget-resizer {
@@ -3980,6 +3974,7 @@
                     widgetEl.className = `glass-card widget-card-${widget.id} ${spanClass}`;
                     widgetEl.style.position = 'relative';
                     widgetEl.setAttribute('draggable', 'true');
+                    widgetEl.setAttribute('data-widget-id', widget.id);
                     
                     // Bind drag & drop events
                     widgetEl.addEventListener('dragstart', (e) => handleDragStart(e, widget.id));
@@ -4203,9 +4198,6 @@
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', id);
             
-            const grid = document.querySelector('.dashboard-lower-grid');
-            if (grid) grid.classList.add('dragging-mode');
-            
             setTimeout(() => {
                 const el = document.querySelector(`.widget-card-${id}`);
                 if (el) el.classList.add('drag-active');
@@ -4220,25 +4212,36 @@
 
         function handleDragEnter(e) {
             e.preventDefault();
-            this.classList.add('drag-over');
+            const card = e.target.closest('.glass-card');
+            if (card) {
+                card.classList.add('drag-over');
+            }
         }
 
         function handleDragLeave(e) {
-            this.classList.remove('drag-over');
+            const card = e.target.closest('.glass-card');
+            if (card) {
+                card.classList.remove('drag-over');
+            }
         }
 
         function handleDrop(e, targetId) {
             e.stopPropagation();
             e.preventDefault();
             
-            this.classList.remove('drag-over');
+            document.querySelectorAll('.dashboard-lower-grid > div').forEach(el => {
+                el.classList.remove('drag-over');
+            });
             
-            const grid = document.querySelector('.dashboard-lower-grid');
-            if (grid) grid.classList.remove('dragging-mode');
+            let sourceId = e.dataTransfer.getData('text/plain') || dragSourceId;
+            const targetCard = e.target.closest('.glass-card');
+            if (!targetCard) return false;
             
-            if (dragSourceId !== targetId) {
-                const fromIdx = ssmDashboardWidgets.findIndex(w => w.id === dragSourceId);
-                const toIdx = ssmDashboardWidgets.findIndex(w => w.id === targetId);
+            const dropTargetId = targetCard.getAttribute('data-widget-id');
+            
+            if (sourceId && dropTargetId && sourceId !== dropTargetId) {
+                const fromIdx = ssmDashboardWidgets.findIndex(w => w.id === sourceId);
+                const toIdx = ssmDashboardWidgets.findIndex(w => w.id === dropTargetId);
                 
                 if (fromIdx !== -1 && toIdx !== -1) {
                     const movedItem = ssmDashboardWidgets.splice(fromIdx, 1)[0];
@@ -4253,13 +4256,11 @@
 
         function handleDragEnd(e) {
             this.classList.remove('drag-active');
-            const grid = document.querySelector('.dashboard-lower-grid');
-            if (grid) grid.classList.remove('dragging-mode');
-            
             document.querySelectorAll('.dashboard-lower-grid > div').forEach(el => {
                 el.classList.remove('drag-over');
                 el.classList.remove('drag-active');
             });
+            dragSourceId = null;
         }
 
         let activeResizingWidgetId = null;
