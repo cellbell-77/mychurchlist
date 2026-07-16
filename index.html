@@ -487,6 +487,12 @@
             transform: scale(1.01);
             transition: transform 0.2s;
         }
+        .dashboard-lower-grid.dragging-mode * {
+            pointer-events: none !important;
+        }
+        .dashboard-lower-grid.dragging-mode > div {
+            pointer-events: auto !important;
+        }
 
         /* Widget Resizer Handle */
         .widget-resizer {
@@ -4196,6 +4202,10 @@
             dragSourceId = id;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', id);
+            
+            const grid = document.querySelector('.dashboard-lower-grid');
+            if (grid) grid.classList.add('dragging-mode');
+            
             setTimeout(() => {
                 const el = document.querySelector(`.widget-card-${id}`);
                 if (el) el.classList.add('drag-active');
@@ -4203,14 +4213,13 @@
         }
 
         function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
+            e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             return false;
         }
 
         function handleDragEnter(e) {
+            e.preventDefault();
             this.classList.add('drag-over');
         }
 
@@ -4223,6 +4232,9 @@
             e.preventDefault();
             
             this.classList.remove('drag-over');
+            
+            const grid = document.querySelector('.dashboard-lower-grid');
+            if (grid) grid.classList.remove('dragging-mode');
             
             if (dragSourceId !== targetId) {
                 const fromIdx = ssmDashboardWidgets.findIndex(w => w.id === dragSourceId);
@@ -4241,6 +4253,9 @@
 
         function handleDragEnd(e) {
             this.classList.remove('drag-active');
+            const grid = document.querySelector('.dashboard-lower-grid');
+            if (grid) grid.classList.remove('dragging-mode');
+            
             document.querySelectorAll('.dashboard-lower-grid > div').forEach(el => {
                 el.classList.remove('drag-over');
                 el.classList.remove('drag-active');
