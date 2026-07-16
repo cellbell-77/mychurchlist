@@ -477,6 +477,43 @@
         .widget-span-6 { grid-column: span 6; }
         .widget-span-4 { grid-column: span 4; }
 
+        /* Drag & Drop Visual Indicator */
+        .drag-active {
+            opacity: 0.5;
+            border: 2px dashed var(--primary) !important;
+        }
+        .drag-over {
+            border: 2px solid var(--primary) !important;
+            transform: scale(1.01);
+            transition: transform 0.2s;
+        }
+
+        /* Widget Resizer Handle */
+        .widget-resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 8px;
+            cursor: col-resize;
+            z-index: 10;
+            background: transparent;
+            border-radius: 0 16px 16px 0;
+        }
+        .widget-resizer:hover {
+            background: rgba(139, 92, 246, 0.25) !important;
+        }
+        .widget-resizer-active {
+            background: var(--primary) !important;
+            width: 4px !important;
+        }
+
+        @media (max-width: 1024px) {
+            .widget-resizer {
+                display: none !important;
+            }
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -562,8 +599,10 @@
         }
 
         #detail-prayers-table-body td:nth-child(7) {
-            white-space: normal !important;
+            white-space: pre-wrap !important;
             min-width: 250px;
+            line-height: 1.4;
+            text-align: left;
         }
 
         th {
@@ -3932,12 +3971,23 @@
                     else if (widget.width === 'half') spanClass = 'widget-span-6';
                     else if (widget.width === 'third') spanClass = 'widget-span-4';
                     
-                    widgetEl.className = `glass-card ${spanClass}`;
+                    widgetEl.className = `glass-card widget-card-${widget.id} ${spanClass}`;
+                    widgetEl.style.position = 'relative';
+                    widgetEl.setAttribute('draggable', 'true');
+                    
+                    // Bind drag & drop events
+                    widgetEl.addEventListener('dragstart', (e) => handleDragStart(e, widget.id));
+                    widgetEl.addEventListener('dragover', handleDragOver);
+                    widgetEl.addEventListener('dragenter', handleDragEnter);
+                    widgetEl.addEventListener('dragleave', handleDragLeave);
+                    widgetEl.addEventListener('drop', (e) => handleDrop(e, widget.id));
+                    widgetEl.addEventListener('dragend', handleDragEnd);
                     
                     if (widget.id === 'recent-logs') {
                         widgetEl.innerHTML = `
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">✍️ 최근 기록된 성도 동정</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem; cursor:move;">✍️ 최근 기록된 성도 동정</h3>
                             <div id="dash-recent-logs-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
                         `;
                         lowerGrid.appendChild(widgetEl);
                         
@@ -3965,8 +4015,9 @@
                     } 
                     else if (widget.id === 'upcoming-events') {
                         widgetEl.innerHTML = `
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">🗓️ 다가오는 일정</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; cursor:move;">🗓️ 다가오는 일정</h3>
                             <div id="dash-upcoming-events" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
                         `;
                         lowerGrid.appendChild(widgetEl);
                         
@@ -3995,8 +4046,9 @@
                     }
                     else if (widget.id === 'parish-prayers') {
                         widgetEl.innerHTML = `
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">🙏 구역별 최신 기도부탁</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem; cursor:move;">🙏 구역별 최신 기도부탁</h3>
                             <div id="dash-parish-prayers-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
                         `;
                         lowerGrid.appendChild(widgetEl);
                         
@@ -4050,8 +4102,9 @@
                     }
                     else if (widget.id === 'recent-prayers') {
                         widgetEl.innerHTML = `
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">🙏 최근 기도제목 요약</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; cursor:move;">🙏 최근 기도제목 요약</h3>
                             <div id="dash-recent-prayers-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
                         `;
                         lowerGrid.appendChild(widgetEl);
                         
@@ -4093,8 +4146,9 @@
                     }
                     else if (widget.id === 'parish-stats') {
                         widgetEl.innerHTML = `
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">👥 구역별 성도 분포</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; cursor:move;">👥 구역별 성도 분포</h3>
                             <div id="dash-parish-stats-list" style="display:flex; flex-direction:column; gap:0.5rem; max-height: 250px; overflow-y: auto;"></div>
+                            <div class="widget-resizer" onmousedown="startWidgetResize(event, '${widget.id}')"></div>
                         `;
                         lowerGrid.appendChild(widgetEl);
                         
@@ -4131,6 +4185,140 @@
                     }
                 });
             }
+        }
+
+        // ==========================================
+        // 🧱 DASHBOARD DRAG, DROP & RESIZE CONTROLLERS
+        // ==========================================
+        let dragSourceId = null;
+
+        function handleDragStart(e, id) {
+            dragSourceId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', id);
+            setTimeout(() => {
+                const el = document.querySelector(`.widget-card-${id}`);
+                if (el) el.classList.add('drag-active');
+            }, 0);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, targetId) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            this.classList.remove('drag-over');
+            
+            if (dragSourceId !== targetId) {
+                const fromIdx = ssmDashboardWidgets.findIndex(w => w.id === dragSourceId);
+                const toIdx = ssmDashboardWidgets.findIndex(w => w.id === targetId);
+                
+                if (fromIdx !== -1 && toIdx !== -1) {
+                    const movedItem = ssmDashboardWidgets.splice(fromIdx, 1)[0];
+                    ssmDashboardWidgets.splice(toIdx, 0, movedItem);
+                    
+                    safeStorage.setItem('ssm_dashboard_widgets', JSON.stringify(ssmDashboardWidgets));
+                    renderDashboard();
+                }
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('drag-active');
+            document.querySelectorAll('.dashboard-lower-grid > div').forEach(el => {
+                el.classList.remove('drag-over');
+                el.classList.remove('drag-active');
+            });
+        }
+
+        let activeResizingWidgetId = null;
+        let startX = 0;
+        let initialSpanWidth = 0;
+
+        function startWidgetResize(e, widgetId) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            activeResizingWidgetId = widgetId;
+            startX = e.clientX;
+            
+            const widgetCard = e.target.parentElement;
+            initialSpanWidth = widgetCard.offsetWidth;
+            
+            e.target.classList.add('widget-resizer-active');
+            
+            document.addEventListener('mousemove', handleWidgetResize);
+            document.addEventListener('mouseup', stopWidgetResize);
+        }
+
+        function handleWidgetResize(e) {
+            if (!activeResizingWidgetId) return;
+            
+            const deltaX = e.clientX - startX;
+            const newWidth = initialSpanWidth + deltaX;
+            
+            const gridEl = document.querySelector('.dashboard-lower-grid');
+            if (!gridEl) return;
+            
+            const gridWidth = gridEl.offsetWidth;
+            const ratio = newWidth / gridWidth;
+            
+            let targetWidthStr = 'third';
+            if (ratio > 0.83) {
+                targetWidthStr = 'full';
+            } else if (ratio > 0.58) {
+                targetWidthStr = 'twothirds';
+            } else if (ratio > 0.40) {
+                targetWidthStr = 'half';
+            } else {
+                targetWidthStr = 'third';
+            }
+            
+            const widget = ssmDashboardWidgets.find(w => w.id === activeResizingWidgetId);
+            if (widget && widget.width !== targetWidthStr) {
+                widget.width = targetWidthStr;
+                
+                safeStorage.setItem('ssm_dashboard_widgets', JSON.stringify(ssmDashboardWidgets));
+                
+                const widgetCard = document.querySelector(`.widget-card-${activeResizingWidgetId}`);
+                if (widgetCard) {
+                    widgetCard.classList.remove('widget-span-12', 'widget-span-8', 'widget-span-6', 'widget-span-4');
+                    let spanClass = 'widget-span-4';
+                    if (targetWidthStr === 'full') spanClass = 'widget-span-12';
+                    else if (targetWidthStr === 'twothirds') spanClass = 'widget-span-8';
+                    else if (targetWidthStr === 'half') spanClass = 'widget-span-6';
+                    
+                    widgetCard.classList.add(spanClass);
+                }
+            }
+        }
+
+        function stopWidgetResize(e) {
+            document.removeEventListener('mousemove', handleWidgetResize);
+            document.removeEventListener('mouseup', stopWidgetResize);
+            
+            document.querySelectorAll('.widget-resizer').forEach(el => {
+                el.classList.remove('widget-resizer-active');
+            });
+            
+            activeResizingWidgetId = null;
+            renderDashboard();
         }
 
         // ==========================================
