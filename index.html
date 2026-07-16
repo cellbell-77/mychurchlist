@@ -466,6 +466,17 @@
         }
 
         /* Dashboard widgets */
+        .dashboard-lower-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .widget-span-12 { grid-column: span 12; }
+        .widget-span-8 { grid-column: span 8; }
+        .widget-span-6 { grid-column: span 6; }
+        .widget-span-4 { grid-column: span 4; }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1037,6 +1048,9 @@
                 grid-template-columns: 1fr !important;
                 gap: 1.25rem !important;
             }
+            .dashboard-lower-grid > div {
+                grid-column: span 12 !important;
+            }
             
             /* Stack modal headers vertically on mobile to prevent horizontal squeezing */
             .modal-header {
@@ -1476,11 +1490,12 @@
         <!-- 📊 VIEW: DASHBOARD -->
         <!-- ========================================== -->
         <section id="view-dashboard" class="view-panel">
-            <header>
+            <header style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h1 class="page-title">📊 목회 대시보드</h1>
                     <p class="page-desc">구역 및 봉사부서 성도 케어와 심방 현황 요약입니다.</p>
                 </div>
+                <button class="btn" onclick="openDashboardConfigModal()" style="display: flex; align-items: center; gap: 0.5rem;">⚙️ 대시보드 설정</button>
             </header>
 
             <div class="dashboard-grid">
@@ -1507,21 +1522,8 @@
                 </div>
             </div>
 
-            <div class="dashboard-lower-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-                <!-- Recent Visit Logs -->
-                <div class="glass-card">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">✍️ 최근 기록된 성도 동정</h3>
-                    <div id="dash-recent-logs-list" style="display:flex; flex-direction:column; gap:0.75rem;">
-                        <!-- dynamic logs -->
-                    </div>
-                </div>
-                <!-- Upcoming visits widget -->
-                <div class="glass-card">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">🗓️ 다가오는 일정</h3>
-                    <div id="dash-upcoming-events" style="display:flex; flex-direction:column; gap:0.75rem;">
-                        <!-- dynamic upcoming events -->
-                    </div>
-                </div>
+            <div class="dashboard-lower-grid">
+                <!-- JavaScript renders widgets here dynamically -->
             </div>
         </section>
 
@@ -1598,6 +1600,7 @@
                         <thead style="position: sticky; top: 0; background: var(--table-head-bg); z-index: 2;">
                             <tr>
                                 <th style="text-align:center; width:40px;"><input type="checkbox" id="check-all-members" onclick="toggleAllMemberCheckboxes(this)"></th>
+                                <th style="text-align:center; width:50px;">No.</th>
                                 <th style="text-align:center; width:80px;">관리</th>
                                 <th>이름</th>
                                 <th>직분</th>
@@ -1740,7 +1743,7 @@
                     </div>
 
                     <!-- Google Calendar Iframe Embed (if ID/embed exists) -->
-                    <div id="google-calendar-embed-container" class="hidden" style="width:100%; height:600px; border-radius:12px; overflow:hidden; border:1px solid var(--card-border);">
+                    <div id="google-calendar-embed-container" class="hidden" style="width:100%; height:1200px; border-radius:12px; overflow:hidden; border:1px solid var(--card-border);">
                         <!-- iframe goes here -->
                     </div>
                 </div>
@@ -2078,6 +2081,7 @@
                 <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
                         <tr>
+                            <th style="padding: 0.75rem 1rem; width: 60px;">No.</th>
                             <th style="padding: 0.75rem 1rem;">요청 성도</th>
                             <th style="padding: 0.75rem 1rem;">기도 대상자</th>
                             <th style="padding: 0.75rem 1rem;">관계</th>
@@ -2702,6 +2706,28 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- ⚙️ MODAL: DASHBOARD CONFIG -->
+    <!-- ========================================== -->
+    <div id="dashboard-config-modal" class="modal-overlay hidden" style="z-index: 1004;">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color: white; font-size: 1.2rem; font-weight:700;">⚙️ 대시보드 위젯 설정</h3>
+                <button style="background:transparent; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer;" onclick="closeDashboardConfigModal()">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:1.25rem;">
+                <p style="font-size:0.85rem; color:var(--text-secondary);">대시보드에 표시할 위젯의 종류와 배치 순서를 설정합니다.</p>
+                <div id="dashboard-widgets-config-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <!-- dynamic config list -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeDashboardConfigModal()">취소</button>
+                <button class="btn btn-primary" onclick="saveDashboardConfig()">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- JAVASCRIPT SYSTEM ENGINE -->
     <!-- ========================================== -->
     <script>
@@ -2897,6 +2923,13 @@
         let members = [];
         let schedules = [];
         let activeTab = 'view-dashboard';
+        let ssmDashboardWidgets = [
+            { id: 'recent-logs', title: '✍️ 최근 기록된 성도 동정', visible: true, width: 'twothirds' },
+            { id: 'upcoming-events', title: '🗓️ 다가오는 일정', visible: true, width: 'third' },
+            { id: 'parish-prayers', title: '🙏 구역별 최신 기도부탁', visible: false, width: 'twothirds' },
+            { id: 'recent-prayers', title: '🙏 최근 등록된 모든 기도부탁', visible: false, width: 'third' },
+            { id: 'parish-stats', title: '👥 구역별 성도 분포', visible: false, width: 'third' }
+        ];
         let selectedEditorMode = 'ai'; // 'ai' | 'manual'
         let parsedMembersBuffer = []; // Temp storage for parser
         let chatHistory = [];
@@ -3670,6 +3703,16 @@
                 safeStorage.setItem('ssm_schedules', JSON.stringify(schedules));
             }
 
+            // Load dashboard widgets
+            const storedWidgets = safeStorage.getItem('ssm_dashboard_widgets');
+            if (storedWidgets) {
+                try {
+                    ssmDashboardWidgets = JSON.parse(storedWidgets);
+                } catch (e) {
+                    console.error("Failed to parse dashboard widgets configuration", e);
+                }
+            }
+
             // API Settings defaults
             if (!safeStorage.getItem('ssm_api_model')) {
                 safeStorage.setItem('ssm_api_model', 'gemini-2.5-flash');
@@ -3839,9 +3882,6 @@
             });
         }
 
-        // ==========================================
-        // 📊 CORE FUNCTION: DASHBOARD
-        // ==========================================
         function renderDashboard() {
             document.getElementById('dash-total-members').textContent = `${members.length}명`;
             
@@ -3877,55 +3917,309 @@
             });
             document.getElementById('dash-weekly-schedules').textContent = `${weeklyEvents.length}건`;
 
-            // Sort logs by date descending
-            dashLogs.sort((a, b) => new Date(b.log.date) - new Date(a.log.date));
-            const recentLogsContainer = document.getElementById('dash-recent-logs-list');
-            recentLogsContainer.innerHTML = '';
+            // Dynamic Widget Rendering
+            const lowerGrid = document.querySelector('.dashboard-lower-grid');
+            if (lowerGrid) {
+                lowerGrid.innerHTML = '';
+                
+                ssmDashboardWidgets.forEach(widget => {
+                    if (!widget.visible) return;
+                    
+                    const widgetEl = document.createElement('div');
+                    let spanClass = 'widget-span-4';
+                    if (widget.width === 'full') spanClass = 'widget-span-12';
+                    else if (widget.width === 'twothirds') spanClass = 'widget-span-8';
+                    else if (widget.width === 'half') spanClass = 'widget-span-6';
+                    else if (widget.width === 'third') spanClass = 'widget-span-4';
+                    
+                    widgetEl.className = `glass-card ${spanClass}`;
+                    
+                    if (widget.id === 'recent-logs') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">✍️ 최근 기록된 성도 동정</h3>
+                            <div id="dash-recent-logs-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        dashLogs.sort((a, b) => new Date(b.log.date) - new Date(a.log.date));
+                        const recentLogsContainer = document.getElementById('dash-recent-logs-list');
+                        if (dashLogs.length === 0) {
+                            recentLogsContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.9rem;">기록된 성도 동정이 없습니다.</div>';
+                        } else {
+                            dashLogs.slice(0, 5).forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'glass-card';
+                                div.style.padding = '1rem';
+                                div.innerHTML = `
+                                    <div class="dash-log-header" style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem; flex-wrap:wrap; gap:0.25rem;">
+                                        <span style="font-weight:700; color:white;">${item.memberName} ${item.duty} - ${item.log.title}</span>
+                                        <span style="color:var(--text-secondary);">${item.log.date} (${item.log.type})</span>
+                                    </div>
+                                    <p style="font-size:0.8rem; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                                        ${item.log.content.replace(/[#*`>]/g, '')}
+                                    </p>
+                                `;
+                                recentLogsContainer.appendChild(div);
+                            });
+                        }
+                    } 
+                    else if (widget.id === 'upcoming-events') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">🗓️ 다가오는 일정</h3>
+                            <div id="dash-upcoming-events" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        const sortedSchedules = [...schedules].sort((a, b) => new Date(a.date) - new Date(b.date));
+                        const upcomingContainer = document.getElementById('dash-upcoming-events');
+                        const activeUpcoming = sortedSchedules.filter(s => new Date(s.date) >= new Date().setHours(0,0,0,0));
+                        
+                        if (activeUpcoming.length === 0) {
+                            upcomingContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.85rem;">예정된 모임이나 심방 일정이 없습니다.</div>';
+                        } else {
+                            activeUpcoming.slice(0, 5).forEach(s => {
+                                const div = document.createElement('div');
+                                div.style.cssText = "background:rgba(255,255,255,0.01); border:1px solid var(--card-border); padding:0.75rem; border-radius:10px; font-size:0.85rem;";
+                                div.innerHTML = `
+                                    <div class="dash-log-header" style="display:flex; justify-content:space-between; font-weight:600; color:var(--warning); flex-wrap:wrap; gap:0.25rem;">
+                                        <span>${s.title}</span>
+                                        <span>${s.date}</span>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">
+                                        구분: ${s.category} (${s.scope})
+                                    </div>
+                                `;
+                                upcomingContainer.appendChild(div);
+                            });
+                        }
+                    }
+                    else if (widget.id === 'parish-prayers') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white; display:flex; align-items:center; gap:0.5rem;">🙏 구역별 최신 기도부탁</h3>
+                            <div id="dash-parish-prayers-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        const parishPrayersContainer = document.getElementById('dash-parish-prayers-list');
+                        const parishLatestPrayers = {};
+                        
+                        members.forEach(m => {
+                            const mParish = m.parish || '구역없음';
+                            if (m.prayerRequests) {
+                                m.prayerRequests.forEach(p => {
+                                    const registeredDate = p.registeredAt ? new Date(p.registeredAt) : new Date(0);
+                                    if (!parishLatestPrayers[mParish] || new Date(parishLatestPrayers[mParish].registeredAt) < registeredDate) {
+                                        parishLatestPrayers[mParish] = {
+                                            parish: mParish,
+                                            memberName: m.name,
+                                            duty: m.duty,
+                                            prayerName: p.name,
+                                            relation: p.relation,
+                                            notes: p.notes,
+                                            registeredAt: p.registeredAt || '미기입'
+                                        };
+                                    }
+                                });
+                            }
+                        });
+                        
+                        const parishList = Object.values(parishLatestPrayers).sort((a, b) => a.parish.localeCompare(b.parish));
+                        
+                        if (parishList.length === 0) {
+                            parishPrayersContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.9rem;">기록된 구역별 기도부탁이 없습니다.</div>';
+                        } else {
+                            parishList.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'glass-card';
+                                div.style.padding = '1rem';
+                                div.innerHTML = `
+                                    <div class="dash-log-header" style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem; flex-wrap:wrap; gap:0.25rem;">
+                                        <span style="font-weight:700; color:var(--primary-hover);"><span class="badge badge-violet" style="padding:0.1rem 0.3rem; margin-right:0.3rem;">${item.parish}</span>${item.memberName} ${item.duty}</span>
+                                        <span style="color:var(--text-secondary); font-size:0.75rem;">등록일: ${item.registeredAt}</span>
+                                    </div>
+                                    <div style="font-size:0.8rem; color:white; margin-bottom:0.25rem; font-weight: 500;">
+                                        대상: ${item.prayerName} (${item.relation})
+                                    </div>
+                                    <p style="font-size:0.8rem; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+                                        ${item.notes.replace(/[#*`>]/g, '')}
+                                    </p>
+                                `;
+                                parishPrayersContainer.appendChild(div);
+                            });
+                        }
+                    }
+                    else if (widget.id === 'recent-prayers') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">🙏 최근 기도제목 요약</h3>
+                            <div id="dash-recent-prayers-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        const recentPrayersContainer = document.getElementById('dash-recent-prayers-list');
+                        let allPrayers = [];
+                        members.forEach(m => {
+                            if (m.prayerRequests) {
+                                m.prayerRequests.forEach(p => {
+                                    allPrayers.push({
+                                        memberName: m.name,
+                                        duty: m.duty,
+                                        parish: m.parish || '구역없음',
+                                        prayer: p
+                                    });
+                                });
+                            }
+                        });
+                        
+                        allPrayers.sort((a, b) => new Date(b.prayer.registeredAt || 0) - new Date(a.prayer.registeredAt || 0));
+                        
+                        if (allPrayers.length === 0) {
+                            recentPrayersContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.85rem;">기록된 기도부탁이 없습니다.</div>';
+                        } else {
+                            allPrayers.slice(0, 5).forEach(item => {
+                                const div = document.createElement('div');
+                                div.style.cssText = "background:rgba(255,255,255,0.01); border:1px solid var(--card-border); padding:0.75rem; border-radius:10px; font-size:0.85rem;";
+                                div.innerHTML = `
+                                    <div class="dash-log-header" style="display:flex; justify-content:space-between; font-weight:600; color:var(--primary-hover); flex-wrap:wrap; gap:0.25rem;">
+                                        <span>${item.memberName} (${item.parish})</span>
+                                        <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">${item.prayer.registeredAt || ''}</span>
+                                    </div>
+                                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">
+                                        대상: ${item.prayer.name} (${item.prayer.relation})<br>${item.prayer.notes}
+                                    </div>
+                                `;
+                                recentPrayersContainer.appendChild(div);
+                            });
+                        }
+                    }
+                    else if (widget.id === 'parish-stats') {
+                        widgetEl.innerHTML = `
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: white;">👥 구역별 성도 분포</h3>
+                            <div id="dash-parish-stats-list" style="display:flex; flex-direction:column; gap:0.5rem; max-height: 250px; overflow-y: auto;"></div>
+                        `;
+                        lowerGrid.appendChild(widgetEl);
+                        
+                        const statsContainer = document.getElementById('dash-parish-stats-list');
+                        const parishCounts = {};
+                        const totalCount = members.length || 1;
+                        
+                        members.forEach(m => {
+                            const p = m.parish || '구역없음';
+                            parishCounts[p] = (parishCounts[p] || 0) + 1;
+                        });
+                        
+                        const sortedParishes = Object.entries(parishCounts).sort((a, b) => b[1] - a[1]);
+                        
+                        if (sortedParishes.length === 0) {
+                            statsContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.85rem;">구역 데이터가 없습니다.</div>';
+                        } else {
+                            sortedParishes.forEach(([parishName, count]) => {
+                                const percent = Math.round((count / totalCount) * 100);
+                                const row = document.createElement('div');
+                                row.style.cssText = "display:flex; flex-direction:column; gap:0.25rem; font-size:0.8rem; margin-bottom:0.25rem;";
+                                row.innerHTML = `
+                                    <div style="display:flex; justify-content:space-between; color:var(--text-primary);">
+                                        <span>${parishName}</span>
+                                        <span style="font-weight:600;">${count}명 (${percent}%)</span>
+                                    </div>
+                                    <div style="width:100%; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
+                                        <div style="width:${percent}%; height:100%; background:var(--primary); border-radius:3px;"></div>
+                                    </div>
+                                `;
+                                statsContainer.appendChild(row);
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // ==========================================
+        // ⚙️ DASHBOARD CONFIGURATION LOGIC
+        // ==========================================
+        function openDashboardConfigModal() {
+            renderDashboardConfigList();
+            document.getElementById('dashboard-config-modal').classList.remove('hidden');
+        }
+
+        function closeDashboardConfigModal() {
+            document.getElementById('dashboard-config-modal').classList.add('hidden');
+        }
+
+        function renderDashboardConfigList() {
+            const listContainer = document.getElementById('dashboard-widgets-config-list');
+            listContainer.innerHTML = '';
             
-            if (dashLogs.length === 0) {
-                recentLogsContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.9rem;">기록된 성도 동정이 없습니다.</div>';
-            } else {
-                dashLogs.slice(0, 4).forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'glass-card';
-                    div.style.padding = '1rem';
-                    div.innerHTML = `
-                        <div class="dash-log-header" style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem; flex-wrap:wrap; gap:0.25rem;">
-                            <span style="font-weight:700; color:white;">${item.memberName} ${item.duty} - ${item.log.title}</span>
-                            <span style="color:var(--text-secondary);">${item.log.date} (${item.log.type})</span>
-                        </div>
-                        <p style="font-size:0.8rem; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-                            ${item.log.content.replace(/[#*`>]/g, '')}
-                        </p>
-                    `;
-                    recentLogsContainer.appendChild(div);
-                });
-            }
+            ssmDashboardWidgets.forEach((widget, idx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.02); border:1px solid var(--card-border); padding:0.75rem; border-radius:10px; gap:0.5rem; flex-wrap:wrap;";
+                
+                const leftDiv = document.createElement('div');
+                leftDiv.style.cssText = "display:flex; align-items:center; gap:0.5rem;";
+                leftDiv.innerHTML = `
+                    <input type="checkbox" id="widget-visible-${widget.id}" ${widget.visible ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;">
+                    <label for="widget-visible-${widget.id}" style="font-weight:600; color:white; cursor:pointer; font-size:0.9rem; margin-bottom:0;">${widget.title}</label>
+                `;
+                
+                const rightDiv = document.createElement('div');
+                rightDiv.style.cssText = "display:flex; align-items:center; gap:0.5rem;";
+                
+                const widthSelect = document.createElement('select');
+                widthSelect.id = `widget-width-${widget.id}`;
+                widthSelect.className = 'form-control';
+                widthSelect.style.cssText = "width:auto; padding:0.25rem; font-size:0.8rem; height:30px; margin-bottom:0;";
+                widthSelect.innerHTML = `
+                    <option value="full" ${widget.width === 'full' ? 'selected' : ''}>전체폭 (100%)</option>
+                    <option value="twothirds" ${widget.width === 'twothirds' ? 'selected' : ''}>넓은폭 (66%)</option>
+                    <option value="half" ${widget.width === 'half' ? 'selected' : ''}>반폭 (50%)</option>
+                    <option value="third" ${widget.width === 'third' ? 'selected' : ''}>좁은폭 (33%)</option>
+                `;
+                
+                const upBtn = document.createElement('button');
+                upBtn.className = 'btn';
+                upBtn.style.cssText = "padding:0.2rem 0.4rem; font-size:0.75rem; height:30px;";
+                upBtn.innerHTML = '▲';
+                upBtn.disabled = idx === 0;
+                upBtn.onclick = () => moveWidgetOrder(idx, -1);
+                
+                const downBtn = document.createElement('button');
+                downBtn.className = 'btn';
+                downBtn.style.cssText = "padding:0.2rem 0.4rem; font-size:0.75rem; height:30px;";
+                downBtn.innerHTML = '▼';
+                downBtn.disabled = idx === ssmDashboardWidgets.length - 1;
+                downBtn.onclick = () => moveWidgetOrder(idx, 1);
+                
+                rightDiv.appendChild(widthSelect);
+                rightDiv.appendChild(upBtn);
+                rightDiv.appendChild(downBtn);
+                
+                itemDiv.appendChild(leftDiv);
+                itemDiv.appendChild(rightDiv);
+                listContainer.appendChild(itemDiv);
+            });
+        }
 
-            // Render upcoming events list
-            const sortedSchedules = [...schedules].sort((a, b) => new Date(a.date) - new Date(b.date));
-            const upcomingContainer = document.getElementById('dash-upcoming-events');
-            upcomingContainer.innerHTML = '';
+        function moveWidgetOrder(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= ssmDashboardWidgets.length) return;
+            
+            const temp = ssmDashboardWidgets[index];
+            ssmDashboardWidgets[index] = ssmDashboardWidgets[targetIndex];
+            ssmDashboardWidgets[targetIndex] = temp;
+            
+            renderDashboardConfigList();
+        }
 
-            const activeUpcoming = sortedSchedules.filter(s => new Date(s.date) >= new Date().setHours(0,0,0,0));
-            if (activeUpcoming.length === 0) {
-                upcomingContainer.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:2rem 0; font-size:0.85rem;">예정된 모임이나 심방 일정이 없습니다.</div>';
-            } else {
-                activeUpcoming.slice(0, 4).forEach(s => {
-                    const div = document.createElement('div');
-                    div.style.cssText = "background:rgba(255,255,255,0.01); border:1px solid var(--card-border); padding:0.75rem; border-radius:10px; font-size:0.85rem;";
-                    div.innerHTML = `
-                        <div class="dash-log-header" style="display:flex; justify-content:space-between; font-weight:600; color:var(--warning); flex-wrap:wrap; gap:0.25rem;">
-                            <span>${s.title}</span>
-                            <span>${s.date}</span>
-                        </div>
-                        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;">
-                            구분: ${s.category} (${s.scope})
-                        </div>
-                    `;
-                    upcomingContainer.appendChild(div);
-                });
-            }
+        function saveDashboardConfig() {
+            ssmDashboardWidgets.forEach(widget => {
+                const cb = document.getElementById(`widget-visible-${widget.id}`);
+                const sel = document.getElementById(`widget-width-${widget.id}`);
+                if (cb) widget.visible = cb.checked;
+                if (sel) widget.width = sel.value;
+            });
+            
+            safeStorage.setItem('ssm_dashboard_widgets', JSON.stringify(ssmDashboardWidgets));
+            renderDashboard();
+            closeDashboardConfigModal();
         }
 
         // ==========================================
@@ -4168,7 +4462,7 @@
             if (paginationContainer) paginationContainer.innerHTML = '';
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="18" style="text-align:center; color:var(--text-secondary); padding:2rem 0;">조건에 해당하는 성도가 존재하지 않습니다.</td></tr>`;
                 return;
             }
 
@@ -4180,7 +4474,7 @@
             const startIndex = (currentPage - 1) * itemsPerPage;
             const pageItems = filtered.slice(startIndex, startIndex + itemsPerPage);
 
-            pageItems.forEach(m => {
+            pageItems.forEach((m, idx) => {
                 // Get latest visitation log date
                 let latestVisitDate = '-';
                 if (m.visitLogs && m.visitLogs.length > 0) {
@@ -4213,6 +4507,7 @@
                     <td style="text-align:center;" onclick="event.stopPropagation()">
                         <input type="checkbox" class="member-row-checkbox" value="${m.id}">
                     </td>
+                    <td style="text-align:center; font-size:0.8rem; color:var(--text-secondary);">${startIndex + idx + 1}</td>
                     <td style="text-align:center;">
                         <button class="btn" style="padding:0.2rem 0.4rem; font-size:0.75rem; border-color:rgba(139,92,246,0.15); margin-right:0.15rem;" onclick="openEditMemberModal('${m.id}')">✏️</button>
                         <button class="btn" style="padding:0.2rem 0.4rem; font-size:0.75rem; border-color:rgba(239,68,68,0.15); color:#ef4444;" onclick="deleteMemberDirectly('${m.id}')">🗑️</button>
@@ -7051,17 +7346,18 @@ ${targetedContext}
             });
 
             if (allPrayers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-secondary); padding:3rem 0;">조회된 기도부탁이 없습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-secondary); padding:3rem 0;">조회된 기도부탁이 없습니다.</td></tr>`;
                 return;
             }
 
-            allPrayers.forEach(p => {
+            allPrayers.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 const salvBadge = p.salvation === 'O' 
                     ? '<span class="badge badge-emerald" style="padding:0.15rem 0.4rem; font-size:0.7rem;">O (구원)</span>' 
                     : '<span class="badge" style="padding:0.15rem 0.4rem; font-size:0.7rem; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.25);">X (미구원)</span>';
 
                 tr.innerHTML = `
+                    <td style="padding:0.75rem 1rem; color:var(--text-secondary); font-size:0.85rem;">${idx + 1}</td>
                     <td style="font-weight:700; padding:0.75rem 1rem;">
                         <a href="javascript:void(0)" onclick="viewMemberDetailFromPrayers('${p.memberId}')" style="color:var(--primary-hover); text-decoration:underline;">
                             ${p.memberName} (${p.memberDuty} / ${p.memberParish})
