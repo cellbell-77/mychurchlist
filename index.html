@@ -1632,6 +1632,7 @@
                     <p class="page-desc">등록된 성도 정보를 조회하고 상세 상담기록을 작성합니다.</p>
                 </div>
                 <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-accent" onclick="printParishFellowshipA4()" style="font-weight:700;">🖨️ 구역 교제록 A4 인쇄</button>
                     <button class="btn btn-accent" style="border-color:#ef4444; color:#ef4444; background:transparent; font-weight:700;" onclick="deleteSelectedMembers()">🗑️ 선택 삭제</button>
                     <button class="btn btn-primary" onclick="openAddMemberModal()">+ 개별 성도 수기 등록</button>
                 </div>
@@ -2170,9 +2171,6 @@
                 </div>
                 <button class="btn btn-primary" onclick="openAddPrayerModalFromGlobal()" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 0.25rem;">
                     ➕ 새 기도부탁 등록
-                </button>
-                <button class="btn btn-accent" onclick="printParishFellowshipA4()" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 0.25rem;">
-                    🖨️ 51구역 교제록 A4 인쇄
                 </button>
             </div>
 
@@ -9160,7 +9158,22 @@ ${m.notes || '등록된 메모가 없습니다.'}
         }
 
         function printParishFellowshipA4(parishName) {
-            const targetParish = parishName || '51구역';
+            let targetParish = parishName;
+            
+            // If parishName is not passed, check the selected parish in view-members filter dropdown
+            if (!targetParish) {
+                const selectedInFilter = document.getElementById('member-filter-parish').value;
+                if (selectedInFilter) {
+                    targetParish = selectedInFilter;
+                } else {
+                    // Prompt user to pick/type a parish
+                    const defaultParish = (typeof parishes !== 'undefined' && parishes.length > 0) ? parishes[0] : '51구역';
+                    const input = prompt('교제록을 출력할 구역 이름을 선택/입력해 주세요:', defaultParish);
+                    if (!input) return;
+                    targetParish = input.trim();
+                }
+            }
+
             const modal = document.getElementById('print-report-modal');
             const titleEl = document.getElementById('print-report-title');
             const container = document.getElementById('print-report-content');
@@ -9172,12 +9185,12 @@ ${m.notes || '등록된 메모가 없습니다.'}
             // 1. Filter members of target parish
             let parishMembers = members.filter(m => m.parish === targetParish);
 
-            // Fallback: If target parish is empty, grab all or slice
+            // Fallback: If target parish has no members in dataset, slice fallback for preview
             if (parishMembers.length === 0) {
                 parishMembers = members.slice(0, 15);
             }
 
-            // 2. Group members by Family / Household (주소나 가족관계 기준)
+            // 2. Group members by Family / Household (가족관계나 세대 기준)
             const householdMap = new Map();
             let householdCounter = 1;
 
@@ -9186,7 +9199,6 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 if (!householdMap.has(key)) {
                     householdMap.set(key, {
                         id: householdCounter++,
-                        address: m.address || '주소 미기입',
                         familyText: m.family || '',
                         members: []
                     });
@@ -9194,7 +9206,7 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 householdMap.get(key).members.push(m);
             });
 
-            // 3. Build A4 HTML Table (Matching the user's uploaded Excel format 100%)
+            // 3. Build A4 HTML Table (Removed Address Column as requested)
             let tableRowsHtml = '';
 
             householdMap.forEach((household, hKey) => {
@@ -9233,13 +9245,11 @@ ${m.notes || '등록된 메모가 없습니다.'}
                     `;
 
                     if (idx === 0) {
-                        const formattedAddress = household.address !== '주소 미기입' ? household.address : '-';
                         const formattedFamily = household.familyText ? household.familyText.replace(/\n/g, '<br>') : '-';
                         
                         tableRowsHtml += `
-                            <td rowspan="${rowSpan}" style="text-align:left; padding:4px 6px; font-size:10px; word-break:break-all;">${formattedAddress}</td>
                             <td rowspan="${rowSpan}" style="text-align:left; padding:4px 6px; font-size:10px;">${formattedFamily}</td>
-                            <td rowspan="${rowSpan}" style="text-align:left; padding:6px; min-width:140px;"></td>
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:6px; min-width:160px;"></td>
                         `;
                     }
 
@@ -9262,10 +9272,9 @@ ${m.notes || '등록된 메모가 없습니다.'}
                             <tr style="background:#f2f2f2;">
                                 <th style="width:32px;">번호</th>
                                 <th style="width:32px;">소속</th>
-                                <th style="width:95px;">이 름<br><span style="font-weight:normal; font-size:10px;">출생년도</span><br><span style="font-weight:normal; font-size:10px;">구원일</span></th>
+                                <th style="width:105px;">이 름<br><span style="font-weight:normal; font-size:10px;">출생년도</span><br><span style="font-weight:normal; font-size:10px;">구원일</span></th>
                                 <th style="width:60px;">사진</th>
-                                <th style="width:170px;">집전화 / 주 소</th>
-                                <th style="width:90px;">가족</th>
+                                <th style="width:110px;">가족</th>
                                 <th>간증 및 특이사항</th>
                             </tr>
                         </thead>
