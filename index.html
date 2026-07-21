@@ -1468,6 +1468,16 @@
                 size: A4 portrait;
                 margin: 8mm;
             }
+            thead {
+                display: table-header-group !important;
+            }
+            tbody {
+                display: table-row-group !important;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
         }
 
         .a4-print-page {
@@ -1490,17 +1500,25 @@
             color: #000;
             table-layout: fixed;
         }
+        .fellowship-print-table thead {
+            display: table-header-group;
+        }
+        .fellowship-print-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
         .fellowship-print-table th, .fellowship-print-table td {
             border: 1px solid #000;
-            padding: 4px 5px;
+            padding: 5px 4px;
             text-align: center;
             vertical-align: middle;
-            line-height: 1.3;
+            line-height: 1.35;
             word-break: break-all;
         }
         .fellowship-print-table th {
-            background-color: #f2f2f2 !important;
-            font-weight: bold;
+            background-color: #e9ecef !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
             -webkit-print-color-adjust: exact;
         }
     </style>
@@ -7703,6 +7721,7 @@ ${targetedContext}
                     members[mIdx].prayerRequests[pIdx].age = age ? parseInt(age) : '';
                     members[mIdx].prayerRequests[pIdx].address = address;
                     members[mIdx].prayerRequests[pIdx].notes = notes;
+                    members[mIdx].prayerRequests[pIdx].updatedAt = new Date().toISOString();
                 }
             } else {
                 // Add mode
@@ -9217,7 +9236,8 @@ ${m.notes || '등록된 메모가 없습니다.'}
                 filename:     `${cleanTitle}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             // Generate and Save PDF directly
@@ -9267,13 +9287,28 @@ ${m.notes || '등록된 메모가 없습니다.'}
                     householdMap.set(key, {
                         id: householdCounter++,
                         familyText: m.family || '',
-                        members: []
+                        members: [],
+                        prayers: []
                     });
                 }
-                householdMap.get(key).members.push(m);
+                const hh = householdMap.get(key);
+                hh.members.push(m);
+
+                // Collect member's prayer requests
+                if (m.prayerRequests && Array.isArray(m.prayerRequests) && m.prayerRequests.length > 0) {
+                    m.prayerRequests.forEach(p => {
+                        hh.prayers.push({
+                            memberName: m.name,
+                            relation: p.relation || '가족',
+                            name: p.name,
+                            salvation: p.salvation,
+                            notes: p.notes
+                        });
+                    });
+                }
             });
 
-            // 3. Build A4 HTML Table (Removed Address Column as requested)
+            // 3. Build A4 HTML Table (Refactored Family & Prayer Requests Column)
             let tableRowsHtml = '';
 
             householdMap.forEach((household, hKey) => {
@@ -9306,22 +9341,40 @@ ${m.notes || '등록된 메모가 없습니다.'}
                         tableRowsHtml += `<td rowspan="${rowSpan}" style="font-weight:bold; font-size:12px;">${household.id}</td>`;
                     }
 
-                    tableRowsHtml += `<td style="font-weight:bold;">${deptCode}</td>`;
+                    tableRowsHtml += `<td style="font-weight:bold; font-size:11px;">${deptCode}</td>`;
                     tableRowsHtml += `
-                        <td style="padding:2px 4px;">
-                            <div style="font-weight:bold; font-size:12px;">${m.name}</div>
-                            <div style="font-size:10px; color:#333;">${birthStr}</div>
-                            <div style="font-size:10px; color:#555;">${salvStr}</div>
+                        <td style="padding:5px 4px; line-height:1.4;">
+                            <div style="font-weight:bold; font-size:12px; color:#000; margin-bottom:2px;">${m.name}</div>
+                            <div style="font-size:10px; color:#222; font-weight:500;">${birthStr !== '-' ? birthStr + '년생' : '-'}</div>
+                            <div style="font-size:9.5px; color:#444; margin-top:2px;">${salvStr !== '-' ? salvStr : '-'}</div>
                         </td>
                         <td style="padding:2px;">${photoHtml}</td>
                     `;
 
                     if (idx === 0) {
-                        const formattedFamily = household.familyText ? household.familyText.replace(/\n/g, '<br>') : '-';
+                        let infoParts = [];
                         
+                        // 1) 가족 정보 (있을 경우)
+                        if (household.familyText && household.familyText.trim() !== '') {
+                            const cleanFam = household.familyText.replace(/\n/g, ', ');
+                            infoParts.push(`<div style="margin-bottom:4px;"><strong>- 가족 :</strong> ${cleanFam}</div>`);
+                        }
+                        
+                        // 2) 기도부탁 정보 (내용 제외, 대상자 명단 및 구원여부만 표기)
+                        if (household.prayers && household.prayers.length > 0) {
+                            let prayerItems = household.prayers.map(p => {
+                                const salvBadge = p.salvation === 'O' ? '(구원)' : '(미구원)';
+                                return `${p.name}${salvBadge}`;
+                            }).join(', ');
+                            
+                            infoParts.push(`<div><strong>- 기도부탁 :</strong> ${prayerItems}</div>`);
+                        }
+
+                        const cellContent = infoParts.length > 0 ? infoParts.join('') : '-';
+
                         tableRowsHtml += `
-                            <td rowspan="${rowSpan}" style="text-align:left; padding:4px 6px; font-size:10px;">${formattedFamily}</td>
-                            <td rowspan="${rowSpan}" style="text-align:left; padding:6px; min-width:160px;"></td>
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:5px 6px; font-size:9.5px; line-height:1.4;">${cellContent}</td>
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:6px; min-width:150px;"></td>
                         `;
                     }
 
@@ -9331,23 +9384,23 @@ ${m.notes || '등록된 메모가 없습니다.'}
 
             const pageHtml = `
                 <div class="a4-print-page">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:12px;">
-                        <h1 style="font-size:22px; font-weight:bold; margin:0; color:#000;">${targetParish} 교제록</h1>
-                        <div style="font-size:13px; font-weight:bold; color:#000;">
-                            모임 장소 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                            모임 날짜 : 
+                    <div style="display:flex; align-items:center; gap:25px; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px;">
+                        <h1 style="font-size:22px; font-weight:bold; margin:0; color:#000; white-space:nowrap;">${targetParish} 교제록</h1>
+                        <div style="font-size:12px; font-weight:bold; color:#000; display:flex; gap:25px; align-items:center;">
+                            <span>모임 장소 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span>모임 날짜 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                         </div>
                     </div>
 
                     <table class="fellowship-print-table">
                         <thead>
-                            <tr style="background:#f2f2f2;">
-                                <th style="width:32px;">번호</th>
-                                <th style="width:32px;">소속</th>
-                                <th style="width:105px;">이 름<br><span style="font-weight:normal; font-size:10px;">출생년도</span><br><span style="font-weight:normal; font-size:10px;">구원일</span></th>
-                                <th style="width:60px;">사진</th>
-                                <th style="width:110px;">가족</th>
-                                <th>간증 및 특이사항</th>
+                            <tr style="background:#e9ecef;">
+                                <th style="width:5%; color:#000000 !important; font-weight:800 !important; font-size:11px;">번호</th>
+                                <th style="width:5%; color:#000000 !important; font-weight:800 !important; font-size:11px;">소속</th>
+                                <th style="width:17%; color:#000000 !important; font-weight:800 !important; font-size:11px;">이 름<br><span style="font-weight:700; font-size:10px; color:#000;">출생년도</span><br><span style="font-weight:700; font-size:10px; color:#000;">구원일</span></th>
+                                <th style="width:10%; color:#000000 !important; font-weight:800 !important; font-size:11px;">사진</th>
+                                <th style="width:23%; color:#000000 !important; font-weight:800 !important; font-size:11px;">가족<br><span style="font-weight:700; font-size:10px; color:#000;">기도부탁</span></th>
+                                <th style="color:#000000 !important; font-weight:800 !important; font-size:11px;">간증 및 특이사항</th>
                             </tr>
                         </thead>
                         <tbody>
