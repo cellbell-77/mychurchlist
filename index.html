@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- JSZip Zip Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- html2pdf.js PDF Converter Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Firebase SDK (v9 Compatibility Mode for easy Single-file integration) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -2271,7 +2273,8 @@
                     <p style="font-size:0.75rem; color:var(--text-secondary); margin:0.25rem 0 0 0;">브라우저 인쇄 설정에서 '대상: PDF로 저장'을 선택하시면 A4 파일로 저장됩니다.</p>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <button class="btn btn-primary" onclick="triggerBrowserPrint()" style="font-weight: 700; height: 38px;">🖨️ A4 인쇄 / PDF 다운로드</button>
+                    <button class="btn btn-accent" onclick="downloadReportAsPDF()" style="font-weight: 700; height: 38px; background: linear-gradient(135deg, #10b981, #059669); border: none;">📥 A4 PDF 파일 직접 다운로드</button>
+                    <button class="btn btn-primary" onclick="triggerBrowserPrint()" style="font-weight: 700; height: 38px;">🖨️ 브라우저 인쇄</button>
                     <button class="btn" onclick="closePrintReportModal()" style="height: 38px;">✕ 닫기</button>
                 </div>
             </div>
@@ -9199,6 +9202,28 @@ ${m.notes || '등록된 메모가 없습니다.'}
             window.print();
         }
 
+        function downloadReportAsPDF() {
+            const element = document.querySelector('#print-report-content .a4-print-page');
+            if (!element) {
+                alert('다운로드할 보고서 서식이 준비되지 않았습니다.');
+                return;
+            }
+
+            const titleText = document.getElementById('print-report-title').textContent || '보고서';
+            const cleanTitle = titleText.replace(/[^a-zA-Z0-9가-힣\s]/g, '').trim();
+
+            const opt = {
+                margin:       [8, 8, 8, 8],
+                filename:     `${cleanTitle}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Generate and Save PDF directly
+            html2pdf().set(opt).from(element).save();
+        }
+
         function printParishFellowshipA4(parishName) {
             let targetParish = parishName;
             
@@ -9257,8 +9282,13 @@ ${m.notes || '등록된 메모가 없습니다.'}
 
                 hMembers.forEach((m, idx) => {
                     let deptCode = '성';
-                    if (m.group === '전도인') deptCode = '전';
-                    else if (m.gender === '남' && (m.duty === '집사' || m.duty === '장로' || m.duty === '성도')) deptCode = '봉';
+                    const fellowship = m.fellowship || '';
+                    if (fellowship.includes('봉사회') || fellowship.includes('봉')) deptCode = '봉';
+                    else if (fellowship.includes('어머니') || fellowship.includes('어')) deptCode = '어';
+                    else if (fellowship.includes('청년') || fellowship.includes('청')) deptCode = '청';
+                    else if (fellowship.includes('은장') || fellowship.includes('은') || fellowship.includes('실버')) deptCode = '은';
+                    else if (m.group === '전도인') deptCode = '전';
+                    else if (m.gender === '남') deptCode = '봉';
                     else if (m.gender === '여') deptCode = '어';
                     if (m.duty && m.duty.includes('청년')) deptCode = '청';
 
