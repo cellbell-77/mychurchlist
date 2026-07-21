@@ -7828,11 +7828,20 @@ ${targetedContext}
                 allPrayers = allPrayers.filter(p => p.salvation === salvationFilter);
             }
 
-            allPrayers.sort((a, b) => {
-                const dateA = a.registeredAt || '';
-                const dateB = b.registeredAt || '';
-                return dateB.localeCompare(dateA);
-            });
+            function getPrayerTime(p) {
+                if (!p) return 0;
+                if (p.updatedAt) {
+                    const t = new Date(p.updatedAt).getTime();
+                    if (!isNaN(t)) return t;
+                }
+                if (p.registeredAt) {
+                    const t = new Date(p.registeredAt).getTime();
+                    if (!isNaN(t)) return t;
+                }
+                return 0;
+            }
+
+            allPrayers.sort((a, b) => getPrayerTime(b) - getPrayerTime(a));
 
             if (allPrayers.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-secondary); padding:3rem 0;">조회된 기도부탁이 없습니다.</td></tr>`;
@@ -7844,6 +7853,12 @@ ${targetedContext}
                 const salvBadge = p.salvation === 'O' 
                     ? '<span class="badge badge-emerald" style="padding:0.15rem 0.4rem; font-size:0.7rem;">O (구원)</span>' 
                     : '<span class="badge" style="padding:0.15rem 0.4rem; font-size:0.7rem; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.25);">X (미구원)</span>';
+
+                let dateDisplay = p.registeredAt || '-';
+                if (p.updatedAt) {
+                    const cleanUpd = p.updatedAt.split('T')[0];
+                    dateDisplay = `<div style="font-size:0.8rem; color:var(--text-secondary);">등록: ${p.registeredAt || '-'}</div><div style="font-size:0.75rem; color:var(--primary-hover); margin-top:2px;">수정: ${cleanUpd}</div>`;
+                }
 
                 tr.innerHTML = `
                     <td style="padding:0.75rem 1rem; color:var(--text-secondary); font-size:0.85rem;">${idx + 1}</td>
@@ -7857,7 +7872,7 @@ ${targetedContext}
                     <td style="padding:0.75rem 1rem;">${p.age ? p.age + '세' : '-'}</td>
                     <td style="padding:0.75rem 1rem;">${p.address || '-'}</td>
                     <td style="padding:0.75rem 1rem;">${salvBadge}</td>
-                    <td style="font-size:0.8rem; color:var(--text-secondary); padding:0.75rem 1rem;">${p.registeredAt || '-'}</td>
+                    <td style="padding:0.75rem 1rem;">${dateDisplay}</td>
                     <td style="white-space: pre-wrap; line-height: 1.4; font-size:0.9rem; text-align: left; max-width: 300px; padding:0.75rem 1rem;">${p.notes}</td>
                     <td style="padding:0.75rem 1rem;">
                         <div style="display:flex; gap:0.25rem; justify-content: center;">
