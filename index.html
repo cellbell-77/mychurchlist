@@ -1400,8 +1400,64 @@
             transition: .3s;
             border-radius: 50%;
         }
-        .switch-toggle input:checked + .switch-slider:before {
-            transform: translateX(20px);
+        /* ========================================== */
+        /* 🖨️ A4 PRINT & PDF REPORT STYLES */
+        /* ========================================== */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #print-report-modal, #print-report-modal * {
+                visibility: visible !important;
+            }
+            #print-report-modal {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+        }
+
+        .a4-print-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            color: #000;
+            font-family: 'Pretendard', sans-serif;
+            padding: 12mm;
+            box-sizing: border-box;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .fellowship-print-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            color: #000;
+        }
+        .fellowship-print-table th, .fellowship-print-table td {
+            border: 1px solid #000;
+            padding: 4px 5px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.3;
+        }
+        .fellowship-print-table th {
+            background-color: #f2f2f2 !important;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
         }
     </style>
 </head>
@@ -2002,6 +2058,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="summarizer-member-link">대상 성도 연동 (선택)</label>
+                            <input type="text" id="summarizer-member-search" class="form-control" placeholder="🔍 대상 성도 검색 (이름/구역/직분)..." oninput="filterSummarizerMemberDropdown()" style="margin-bottom:0.3rem; font-size:0.8rem; padding:0.25rem 0.5rem; height:28px;">
                             <select id="summarizer-member-link" class="form-control" onchange="toggleSaveSummarizerButton()">
                                 <!-- dynamic member options -->
                             </select>
@@ -2114,6 +2171,9 @@
                 <button class="btn btn-primary" onclick="openAddPrayerModalFromGlobal()" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 0.25rem;">
                     ➕ 새 기도부탁 등록
                 </button>
+                <button class="btn btn-accent" onclick="printParishFellowshipA4()" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    🖨️ 51구역 교제록 A4 인쇄
+                </button>
             </div>
 
             <div class="table-responsive glass-card" style="flex: 1; overflow-y: auto; padding: 0;">
@@ -2160,7 +2220,26 @@
                 </div>
             </div>
         </section>
-    </main>
+    <!-- ========================================== -->
+    <!-- 🖨️ MODAL: A4 REPORT PRINT & PDF PREVIEW -->
+    <!-- ========================================== -->
+    <div id="print-report-modal" class="modal-overlay hidden" style="z-index: 9999;">
+        <div class="modal-container" style="max-width: 960px; width: 95%; height: 92vh; display: flex; flex-direction: column; background: #1e1e2d; border-radius: 12px; overflow: hidden; padding: 1.25rem;">
+            <div class="modal-header no-print" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                    <h3 id="print-report-title" style="color: white; font-size: 1.2rem; font-weight:700; margin:0;">🖨️ A4 보고서 미리보기 & 인쇄</h3>
+                    <p style="font-size:0.75rem; color:var(--text-secondary); margin:0.25rem 0 0 0;">브라우저 인쇄 설정에서 '대상: PDF로 저장'을 선택하시면 A4 파일로 저장됩니다.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-primary" onclick="triggerBrowserPrint()" style="font-weight: 700; height: 38px;">🖨️ A4 인쇄 / PDF 다운로드</button>
+                    <button class="btn" onclick="closePrintReportModal()" style="height: 38px;">✕ 닫기</button>
+                </div>
+            </div>
+            <div id="print-report-content" style="flex: 1; overflow-y: auto; background: #eef2f5; padding: 1.5rem; display: flex; justify-content: center; border-radius: 8px;">
+                <!-- Dynamic A4 Report Page -->
+            </div>
+        </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- MODAL: ADD/EDIT MEMBER -->
@@ -2542,6 +2621,7 @@
                     </div>
                 </div>
                 <div style="display:flex; gap:0.75rem; align-items:center;">
+                    <button class="btn btn-primary" onclick="printCurrentMemberVisitLogA4()">🖨️ 심방일지 A4 인쇄</button>
                     <button class="btn btn-accent" onclick="downloadSingleMemberMarkdown()">📂 프로필 MD 다운로드</button>
                     <button class="btn" onclick="triggerEditMemberFromDetail()">✏️ 신상 정보 수정</button>
                     <button style="background:transparent; border:none; color:var(--text-secondary); font-size:1.75rem; cursor:pointer;" onclick="closeDetailModal()">✕</button>
@@ -3899,6 +3979,8 @@
                     }
                     if (target === 'view-settings') setParishDeptSettingsView();
                     if (target === 'view-summarizer') {
+                        const searchInput = document.getElementById('summarizer-member-search');
+                        if (searchInput) searchInput.value = '';
                         updateFormSelectors();
                         document.getElementById('summarizer-raw-text').value = '';
                         document.getElementById('summarizer-result-content').value = '';
@@ -4584,13 +4666,43 @@
             });
 
             // Update summarizer member links
-            const sumMember = document.getElementById('summarizer-member-link');
-            if (sumMember) {
-                sumMember.innerHTML = '<option value="">-- 성도 선택 (수동기록 연동용) --</option>';
-                members.forEach(m => {
-                    sumMember.innerHTML += `<option value="${m.id}">${m.name} (${m.duty} / ${m.parish || '구역없음'})</option>`;
-                });
+            updateSummarizerMemberDropdown();
+        }
+
+        function updateSummarizerMemberDropdown() {
+            const dropdown = document.getElementById('summarizer-member-link');
+            if (!dropdown) return;
+
+            const searchInput = document.getElementById('summarizer-member-search');
+            const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            const currentVal = dropdown.value;
+
+            dropdown.innerHTML = '<option value="">-- 성도 선택 (수동기록 연동용) --</option>';
+            members.forEach(m => {
+                const matchName = m.name && m.name.toLowerCase().includes(searchVal);
+                const matchParish = m.parish && m.parish.toLowerCase().includes(searchVal);
+                const matchDuty = m.duty && m.duty.toLowerCase().includes(searchVal);
+                const matchChurch = m.church && m.church.toLowerCase().includes(searchVal);
+
+                if (!searchVal || matchName || matchParish || matchDuty || matchChurch) {
+                    let ageStr = '';
+                    if (m.birth) {
+                        const age = new Date().getFullYear() - parseInt(m.birth) + 1;
+                        ageStr = `, ${age}세`;
+                    }
+                    const churchStr = m.church ? `, ${m.church}` : '';
+                    dropdown.innerHTML += `<option value="${m.id}">${m.name} (${m.duty}${ageStr}${churchStr} / ${m.parish || '구역없음'})</option>`;
+                }
+            });
+
+            if (currentVal) {
+                dropdown.value = currentVal;
             }
+        }
+
+        function filterSummarizerMemberDropdown() {
+            updateSummarizerMemberDropdown();
         }
 
         function quickAddParish() {
@@ -9033,7 +9145,235 @@ ${m.notes || '등록된 메모가 없습니다.'}
             const lcsLen = dp[len1][len2];
             const maxLen = Math.max(len1, len2);
             if (maxLen === 0) return 0;
-            return Math.round((lcsLen / maxLen) * 100);
+        // ==========================================
+        // 🖨️ A4 REPORT PRINT & PDF GENERATOR ENGINE
+        // ==========================================
+        function closePrintReportModal() {
+            document.getElementById('print-report-modal').classList.add('hidden');
+        }
+
+        function triggerBrowserPrint() {
+            window.print();
+        }
+
+        function printParishFellowshipA4(parishName) {
+            const targetParish = parishName || '51구역';
+            const modal = document.getElementById('print-report-modal');
+            const titleEl = document.getElementById('print-report-title');
+            const container = document.getElementById('print-report-content');
+
+            if (!modal || !container) return;
+
+            titleEl.textContent = `🖨️ [${targetParish}] 교제록 A4 미리보기 & 인쇄`;
+
+            // 1. Filter members of target parish
+            let parishMembers = members.filter(m => m.parish === targetParish);
+
+            // Fallback: If target parish is empty, grab all or slice
+            if (parishMembers.length === 0) {
+                parishMembers = members.slice(0, 15);
+            }
+
+            // 2. Group members by Family / Household (주소나 가족관계 기준)
+            const householdMap = new Map();
+            let householdCounter = 1;
+
+            parishMembers.forEach(m => {
+                let key = m.address ? m.address.trim() : (m.family ? m.family.trim() : `single_${m.id}`);
+                if (!householdMap.has(key)) {
+                    householdMap.set(key, {
+                        id: householdCounter++,
+                        address: m.address || '주소 미기입',
+                        familyText: m.family || '',
+                        members: []
+                    });
+                }
+                householdMap.get(key).members.push(m);
+            });
+
+            // 3. Build A4 HTML Table (Matching the user's uploaded Excel format 100%)
+            let tableRowsHtml = '';
+
+            householdMap.forEach((household, hKey) => {
+                const hMembers = household.members;
+                const rowSpan = hMembers.length;
+
+                hMembers.forEach((m, idx) => {
+                    let deptCode = '성';
+                    if (m.group === '전도인') deptCode = '전';
+                    else if (m.gender === '남' && (m.duty === '집사' || m.duty === '장로' || m.duty === '성도')) deptCode = '봉';
+                    else if (m.gender === '여') deptCode = '어';
+                    if (m.duty && m.duty.includes('청년')) deptCode = '청';
+
+                    const birthStr = m.birth ? m.birth : '-';
+                    const salvStr = m.salvationDate ? m.salvationDate.replace(/-/g, '.').substring(2) : '-';
+
+                    const photoHtml = m.photo 
+                        ? `<img src="${m.photo}" style="width:44px; height:54px; object-fit:cover; border-radius:3px;">`
+                        : `<div style="width:44px; height:54px; background:#f0f0f0; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:10px; color:#666;">사진</div>`;
+
+                    tableRowsHtml += `<tr>`;
+
+                    // First row of household contains merged cells (rowspan)
+                    if (idx === 0) {
+                        tableRowsHtml += `<td rowspan="${rowSpan}" style="font-weight:bold; font-size:12px;">${household.id}</td>`;
+                    }
+
+                    tableRowsHtml += `<td style="font-weight:bold;">${deptCode}</td>`;
+                    tableRowsHtml += `
+                        <td style="padding:2px 4px;">
+                            <div style="font-weight:bold; font-size:12px;">${m.name}</div>
+                            <div style="font-size:10px; color:#333;">${birthStr}</div>
+                            <div style="font-size:10px; color:#555;">${salvStr}</div>
+                        </td>
+                        <td style="padding:2px;">${photoHtml}</td>
+                    `;
+
+                    if (idx === 0) {
+                        const formattedAddress = household.address !== '주소 미기입' ? household.address : '-';
+                        const formattedFamily = household.familyText ? household.familyText.replace(/\n/g, '<br>') : '-';
+                        
+                        tableRowsHtml += `
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:4px 6px; font-size:10px; word-break:break-all;">${formattedAddress}</td>
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:4px 6px; font-size:10px;">${formattedFamily}</td>
+                            <td rowspan="${rowSpan}" style="text-align:left; padding:6px; min-width:140px;"></td>
+                        `;
+                    }
+
+                    tableRowsHtml += `</tr>`;
+                });
+            });
+
+            const pageHtml = `
+                <div class="a4-print-page">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #000; padding-bottom:6px; margin-bottom:12px;">
+                        <h1 style="font-size:22px; font-weight:bold; margin:0; color:#000;">${targetParish} 교제록</h1>
+                        <div style="font-size:13px; font-weight:bold; color:#000;">
+                            모임 장소 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                            모임 날짜 : 
+                        </div>
+                    </div>
+
+                    <table class="fellowship-print-table">
+                        <thead>
+                            <tr style="background:#f2f2f2;">
+                                <th style="width:32px;">번호</th>
+                                <th style="width:32px;">소속</th>
+                                <th style="width:95px;">이 름<br><span style="font-weight:normal; font-size:10px;">출생년도</span><br><span style="font-weight:normal; font-size:10px;">구원일</span></th>
+                                <th style="width:60px;">사진</th>
+                                <th style="width:170px;">집전화 / 주 소</th>
+                                <th style="width:90px;">가족</th>
+                                <th>간증 및 특이사항</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = pageHtml;
+            modal.classList.remove('hidden');
+        }
+
+        function printCurrentMemberVisitLogA4() {
+            if (!currentDetailMemberId) return;
+            printMemberVisitLogA4(currentDetailMemberId);
+        }
+
+        function printMemberVisitLogA4(memberId) {
+            const m = members.find(item => item.id === memberId);
+            if (!m) return;
+
+            const modal = document.getElementById('print-report-modal');
+            const titleEl = document.getElementById('print-report-title');
+            const container = document.getElementById('print-report-content');
+
+            if (!modal || !container) return;
+
+            titleEl.textContent = `🖨️ [${m.name} ${m.duty}] 심방일지 A4 보고서 미리보기`;
+
+            const currentYear = new Date().getFullYear();
+            const ageStr = m.birth ? `${m.birth}년생 (${currentYear - parseInt(m.birth) + 1}세)` : '-';
+            const salvStr = m.salvationDate || '기입없음';
+
+            // Latest visit log
+            const logs = m.visitLogs || [];
+            const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
+
+            // Prayers
+            const prayers = m.prayerRequests || [];
+
+            let prayersHtml = '';
+            if (prayers.length > 0) {
+                prayers.forEach((p, i) => {
+                    prayersHtml += `
+                        <div style="margin-bottom:6px; font-size:11px;">
+                            <strong>#${i+1} [${p.relation}] ${p.name} (${p.salvation === 'O' ? '구원' : '미구원'}):</strong> ${p.notes}
+                        </div>
+                    `;
+                });
+            } else {
+                prayersHtml = '<div style="font-size:11px; color:#666;">등록된 기도부탁이 없습니다.</div>';
+            }
+
+            const photoHtml = m.photo 
+                ? `<img src="${m.photo}" style="width:90px; height:110px; object-fit:cover; border-radius:4px; border:1px solid #ccc;">`
+                : `<div style="width:90px; height:110px; background:#f5f5f5; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; font-size:2rem;">👤</div>`;
+
+            const pageHtml = `
+                <div class="a4-print-page">
+                    <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:15px;">
+                        <h1 style="font-size:24px; font-weight:bold; margin:0; letter-spacing:2px;">목 회 심 방 보 고 서</h1>
+                        <div style="font-size:11px; color:#555; margin-top:4px;">성도섬김 마스터 공식 목회 기록 서식</div>
+                    </div>
+
+                    <!-- Member Basic Profile Header -->
+                    <div style="display:flex; gap:15px; border:1px solid #000; padding:12px; margin-bottom:15px; background:#fafafa;">
+                        <div>${photoHtml}</div>
+                        <div style="flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:11px; align-content:center;">
+                            <div><strong>성명 / 직분:</strong> ${m.name} ${m.duty || '성도'}</div>
+                            <div><strong>구역 소속:</strong> ${m.parish || '구역없음'}</div>
+                            <div><strong>생년월일:</strong> ${ageStr}</div>
+                            <div><strong>구원 일자:</strong> ${salvStr}</div>
+                            <div><strong>연락처:</strong> ${m.phone || '-'}</div>
+                            <div><strong>소속 교회:</strong> ${m.church || '본교회'}</div>
+                            <div style="grid-column: span 2;"><strong>주소:</strong> ${m.address || '-'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Visit Log Content -->
+                    <div style="border:1px solid #000; margin-bottom:15px;">
+                        <div style="background:#f0f0f0; border-bottom:1px solid #000; padding:6px 10px; font-weight:bold; font-size:12px; display:flex; justify-content:space-between;">
+                            <span>📝 심방/상담 일지 기록 ${latestLog ? `(${latestLog.date})` : ''}</span>
+                            <span>유형: ${latestLog ? latestLog.type : '-'}</span>
+                        </div>
+                        <div style="padding:12px; font-size:11px; min-height:160px; line-height:1.6; white-space:pre-wrap;">
+${latestLog ? `[제목: ${latestLog.title}]\n\n${latestLog.content}` : '등록된 심방/상담 기록이 없습니다.'}
+                        </div>
+                    </div>
+
+                    <!-- Prayer Requests -->
+                    <div style="border:1px solid #000; margin-bottom:15px;">
+                        <div style="background:#f0f0f0; border-bottom:1px solid #000; padding:6px 10px; font-weight:bold; font-size:12px;">
+                            🙏 가정 기도부탁 및 특이사항
+                        </div>
+                        <div style="padding:10px;">
+                            ${prayersHtml}
+                        </div>
+                    </div>
+
+                    <!-- Sign Footer -->
+                    <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end; font-size:11px;">
+                        <div>작성일자: ${new Date().toLocaleDateString()}</div>
+                        <div style="font-size:12px; font-weight:bold;">담임/담당 목회자 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (인)</div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = pageHtml;
+            modal.classList.remove('hidden');
         }
     </script>
 </body>
