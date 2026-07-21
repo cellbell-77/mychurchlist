@@ -9145,6 +9145,9 @@ ${m.notes || '등록된 메모가 없습니다.'}
             const lcsLen = dp[len1][len2];
             const maxLen = Math.max(len1, len2);
             if (maxLen === 0) return 0;
+            return Math.round((lcsLen / maxLen) * 100);
+        }
+
         // ==========================================
         // 🖨️ A4 REPORT PRINT & PDF GENERATOR ENGINE
         // ==========================================
